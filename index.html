@@ -6,12 +6,10 @@
 <meta name="theme-color" content="#2a2825">
 <title>Limits Pace</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon.svg">
 <style>
+  @font-face { font-family: Manrope; font-style: normal; font-weight: 200 800; font-display: swap; src: url(fonts/manrope.woff2) format("woff2"); }
   :root {
     --bg: #e6e3de; --text: #4a4540; --muted: #8a837a; --dark: #c4c1bd; --light: #ffffff; --accent: #c96442;
     --hair: rgba(0, 0, 0, 0.06); --hi: rgba(255, 255, 255, 0.5); --track: #d8d4ce; --off: rgba(138, 131, 122, 0.28);
@@ -33,7 +31,7 @@
   * { box-sizing: border-box; }
   [hidden] { display: none !important; }
   html, body { margin: 0; min-height: 100%; background: var(--bg); overscroll-behavior: none; transition: background-color 0.35s; }
-  .hero, .card, .knob, .sheet, .well, .segmented button, .chip > div, .stat { transition: background-color 0.35s, box-shadow 0.35s, color 0.35s; }
+  .hero, .card, .knob, .sheet, .well, .segmented button, .stat { transition: background-color 0.35s, box-shadow 0.35s, color 0.35s; }
   body {
     font: 16px/1.4 Manrope, system-ui, -apple-system, "Segoe UI", sans-serif; color: var(--text);
     display: flex; justify-content: center;
@@ -64,7 +62,7 @@
 
   .pills { display: flex; gap: 8px; height: 48px; }
   .pill { position: relative; min-width: 10px; }
-  .pill > div, .strip > div, .bar { position: absolute; inset: 0; overflow: hidden; }
+  .pill > div, .strip > div { position: absolute; inset: 0; overflow: hidden; }
   .pill > div { border-radius: 14px; box-shadow: inset 4px 4px 8px var(--dark), inset -4px -4px 8px var(--light); }
   .fill { position: absolute; left: 0; right: 0; bottom: 0; background: var(--accent); height: 0; transition: height 0.6s ease, width 0.6s ease; }
   .fill.h { top: 0; right: auto; width: 0; height: auto; }
@@ -82,14 +80,6 @@
   .stat { padding: 10px 6px; border-radius: 14px; text-align: center; }
   .stat .k { font-size: 11px; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; }
   .stat .v { font-size: 15px; font-weight: 600; margin-top: 2px; }
-  .chips { display: flex; gap: 6px; }
-  .chip { flex: 1; position: relative; height: 66px; min-width: 0; }
-  .chip > div { position: absolute; inset: 0; border-radius: 18px; display: flex; white-space: nowrap; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-variant-numeric: tabular-nums; }
-  .chip > div.raised { background: var(--bg); box-shadow: 8px 8px 16px var(--dark), -8px -8px 16px var(--light); color: var(--accent); }
-
-  .columns { display: flex; gap: 8px; align-items: flex-end; }
-  .column { min-width: 0; display: grid; gap: 12px; justify-items: center; }
-  .bar { position: relative; width: 100%; height: 160px; border-radius: 14px; box-shadow: inset 5px 5px 10px var(--dark), inset -5px -5px 10px var(--light); }
 
   .segmented { display: flex; padding: 5px; border-radius: 16px; gap: 4px; }
   .segmented button { flex: 1; text-align: center; padding: 9px 0; border-radius: 12px; color: var(--muted); cursor: pointer; transition: color 0.25s, box-shadow 0.25s, background 0.25s; }
@@ -103,6 +93,7 @@
   :root[data-theme=dark] .knob .moon { display: none; }
 
   /* The settings live in a sheet rising from the foot of the screen over a dimmed page. */
+  .grip { width: 40px; height: 5px; border-radius: 3px; margin: -6px auto 10px; background: var(--off); }
   .backdrop { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.35); z-index: 9; }
   .sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; margin: 0 auto; max-width: 440px; max-height: calc(100dvh - 48px); overflow-y: auto; overscroll-behavior: contain; background: var(--bg); border-radius: 28px 28px 0 0; padding: 18px 22px max(24px, env(safe-area-inset-bottom)); box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.25), inset 0 1px 0 var(--hi); }
   @media (min-width: 480px) { .sheet { bottom: 24px; border-radius: 28px; } }
@@ -138,7 +129,8 @@
 
 <div id="backdrop" class="backdrop" hidden></div>
 <section id="sheet" class="sheet" role="dialog" aria-modal="true" aria-label="Settings" hidden>
-  <div class="row" style="align-items:center;padding:4px 2px 2px">
+  <div class="grip" aria-hidden="true"></div>
+  <div class="row" id="sheetHead" style="align-items:center;padding:4px 2px 2px;touch-action:none;cursor:grab">
     <span class="caps">Settings</span>
     <button type="button" id="close" class="knob small" aria-label="Close">
       <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
@@ -149,7 +141,6 @@
       <div class="segmented well" role="radiogroup" aria-label="Layout" id="layout">
         <button type="button" role="radio" data-value="relief">Relief</button>
         <button type="button" role="radio" data-value="cadran">Dial</button>
-        <button type="button" role="radio" data-value="barres">Bars</button>
       </div>
       <div class="caps-sm" style="margin-top:12px">Usage reset</div>
       <div class="segmented well" role="radiogroup" aria-label="Reset day" id="weekday"></div>
@@ -167,6 +158,8 @@
         <div class="colon">:</div>
         <div class="wheel" id="wheelM" tabindex="0" aria-label="Minutes"></div>
       </div>
+      <div class="caps-sm" style="margin-top:12px">Days off</div>
+      <div class="segmented well" role="group" aria-label="Days off" id="restDays"></div>
       <div class="caps-sm" style="margin-top:12px">Week starts on</div>
       <div class="segmented well" role="radiogroup" aria-label="Week starts on" id="weekStart">
         <button type="button" role="radio" data-value="1">Monday</button>
@@ -188,17 +181,18 @@ const WEEK = 7 * DAY;
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const DAY_LETTERS = ["S", "M", "T", "W", "T", "F", "S"];
 const DAY_FULL = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-const LAYOUTS = ["relief", "cadran", "barres"];
-const DEFAULTS = { layout: "relief", theme: "auto", weekday: 1, time: "00:00", dayStart: "09:00", dayEnd: "18:00", weekStart: 1, decimals: 3 };
+const LAYOUTS = ["relief", "cadran"];
+const DEFAULTS = { layout: "relief", theme: "auto", weekday: 1, time: "00:00", dayStart: "09:00", dayEnd: "18:00", weekStart: 1, restDays: [], decimals: 3 };
 
 const VALID = {
-  layout: (v) => ["relief", "cadran", "barres"].includes(v),
+  layout: (v) => LAYOUTS.includes(v),
   weekday: (v) => Number.isInteger(v) && v >= 0 && v <= 6,
   time: (v) => /^([01]\d|2[0-3]):[0-5]\d$/.test(v),
   dayStart: (v) => VALID.time(v),
   dayEnd: (v) => VALID.time(v),
   theme: (v) => ["auto", "light", "dark"].includes(v),
   weekStart: (v) => v === 0 || v === 1,
+  restDays: (v) => Array.isArray(v) && v.length <= 6 && v.every((d) => Number.isInteger(d) && d >= 0 && d <= 6) && new Set(v).size === v.length,
   decimals: (v) => Number.isInteger(v) && v >= 0 && v <= 4,
 };
 
@@ -232,12 +226,13 @@ function atTime(day, time) {
 
 // Working hours of each calendar day of the week, clipped to both resets. An end at or before
 // the start runs past midnight, and an end equal to the start makes a full 24-hour day.
-function workDays(start, { dayStart, dayEnd }) {
+function workDays(start, { dayStart, dayEnd, restDays }) {
   const end = new Date(start.getTime() + WEEK);
   const days = [];
   const day = atTime(start, "00:00");
   day.setDate(day.getDate() - 1);
   for (; day < end; day.setDate(day.getDate() + 1)) {
+    if (restDays.includes(day.getDay())) continue;
     const workStart = atTime(day, dayStart);
     const workEnd = atTime(day, dayEnd);
     if (workEnd <= workStart) workEnd.setDate(workEnd.getDate() + 1);
@@ -351,11 +346,14 @@ function reliefView(v) {
     </div>
     <div class="row num muted" style="margin-top:6px;font-size:13px"><span>${v.todayHours}</span><span>Reset in ${v.left}</span></div>
   </section>
+  ${weekCard(v)}`;
+}
+
+const weekCard = (v) => `
   <section class="card" style="padding:8px 18px 6px">
     <div class="row caps-sm" style="padding:10px 2px 8px"><span>Week</span><span>start → end</span></div>
     ${v.days.map((d) => `<div class="row num ${d.isToday ? "today" : d.isPast ? "past" : ""}" style="padding:9px 2px;border-top:1px solid var(--hair);font-size:14px;${d.isToday ? "font-weight:600" : ""}"><span>${d.name} ${d.date}${d.clip}</span><span>${d.fromPct} → ${d.toPct}</span></div>`).join("")}
   </section>`;
-}
 
 function cadranView(v) {
   const stat = (k, val) => `<div class="stat well"><div class="k">${k}</div><div class="v">${val}</div></div>`;
@@ -377,39 +375,10 @@ function cadranView(v) {
     </div>
     <div class="num muted" style="font-size:13px;white-space:nowrap">${v.todayLabel} · ${v.todayHours}</div>
   </section>
-  <div class="chips">
-    ${v.slots.map((d) => d.isToday
-      ? `<div class="chip"><div class="raised"><span style="font-size:14px;font-weight:700">${d.letter}</span><span style="font-size:11px;font-weight:600">${d.toShort}</span></div></div>`
-      : `<div class="chip"><div class="well ${d.isPast ? "past" : ""}"><span style="font-size:14px;font-weight:600">${d.letter}</span><span class="muted" style="font-size:11px">${d.toShort}</span></div></div>`).join("")}
-  </div>`;
+  ${weekCard(v)}`;
 }
 
-function barresView(v) {
-  return `
-  <div style="padding:12px 6px 0">
-    <div class="caps">You should be at</div>
-    <div class="big" style="margin:14px 0 18px;font-size:clamp(60px,21vw,86px);letter-spacing:-0.03em;text-shadow:3px 3px 6px var(--dark),-3px -3px 6px var(--light)">${odo()}<span class="unit" style="font-size:0.33em;text-shadow:none">%</span></div>
-    <div class="row num muted" style="font-size:13px">
-      <span>${v.todayLabel} · ${v.todayHours}</span><span style="color:var(--text);font-weight:600">${v.todayRangeShort}</span>
-    </div>
-  </div>
-  <section class="hero" style="padding:24px 20px 20px">
-    <div class="columns">
-      ${v.slots.map((d, i) => `<div class="column" style="flex:1">
-        <div class="bar ${d.isToday ? "ring" : ""}">${slot(d, i)}</div>
-        <div class="num ${d.isToday ? "today" : d.isPast ? "past" : ""}" style="text-align:center;white-space:nowrap">
-          <div style="font-size:14px;font-weight:${d.isToday ? 700 : 600}">${d.letter}</div>
-          <div class="${d.isToday ? "" : "muted"}" style="font-size:11px;margin-top:2px;${d.isToday ? "font-weight:600" : ""}">${d.toShort}</div>
-        </div>
-      </div>`).join("")}
-    </div>
-  </section>
-  <div class="row num well" style="align-items:center;padding:14px 20px;border-radius:18px;font-size:15px">
-    <span class="muted">Reset</span><span style="font-weight:600">in ${v.left}</span>
-  </div>`;
-}
-
-const VIEWS = { relief: reliefView, cadran: cadranView, barres: barresView };
+const VIEWS = { relief: reliefView, cadran: cadranView };
 
 let pace = () => 0;
 let slots = [];
@@ -447,8 +416,9 @@ function render() {
     const from = atTime(day, settings.dayStart);
     const to = atTime(day, settings.dayEnd);
     if (to <= from) to.setDate(to.getDate() + 1);
-    const inFrom = new Date(Math.min(Math.max(from, start), to));
-    const inTo = new Date(Math.max(Math.min(to, end), inFrom));
+    const rest = settings.restDays.includes(day.getDay());
+    const inFrom = rest ? from : new Date(Math.min(Math.max(from, start), to));
+    const inTo = rest ? from : new Date(Math.max(Math.min(to, end), inFrom));
     const frac = (t) => (t - from) / (to - from);
     return {
       day, from, to, inFrom, inTo, usable: inFrom < inTo,
@@ -489,8 +459,10 @@ function render() {
 
 // The reset-day row follows the chosen first day of the week.
 function buildWeekdayRow() {
-  $("weekday").innerHTML = Array.from({ length: 7 }, (_, i) => (settings.weekStart + i) % 7)
-    .map((d) => `<button type="button" role="radio" data-value="${d}" aria-label="${DAY_FULL[d]}">${DAY_LETTERS[d]}</button>`).join("");
+  const row = (role) => Array.from({ length: 7 }, (_, i) => (settings.weekStart + i) % 7)
+    .map((d) => `<button type="button" role="${role}" data-value="${d}" aria-label="${DAY_FULL[d]}">${DAY_LETTERS[d]}</button>`).join("");
+  $("weekday").innerHTML = row("radio");
+  $("restDays").innerHTML = row("checkbox");
 }
 
 function syncSettings() {
@@ -501,6 +473,7 @@ function syncSettings() {
   for (const id of ["layout", "weekday", "weekStart", "decimals"]) {
     $(id).querySelectorAll("button").forEach((b) => b.setAttribute("aria-checked", String(b.dataset.value === String(settings[id]))));
   }
+  $("restDays").querySelectorAll("button").forEach((b) => b.setAttribute("aria-checked", String(settings.restDays.includes(Number(b.dataset.value)))));
   for (const key of ["time", "dayStart", "dayEnd"]) $(key).querySelector("[data-value]").textContent = settings[key];
 }
 
@@ -540,11 +513,42 @@ function openSheet() {
 function closeSheet() {
   if (sheet.hidden) return;
   closePicker();
-  document.body.style.overflow = "";
-  backdrop.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 200, easing: "ease-in" });
-  const out = sheet.animate([{ transform: "none", opacity: 1 }, { transform: "translateY(60px)", opacity: 0 }], { duration: 220, easing: "ease-in" });
-  afterAnimation(out, () => { sheet.hidden = backdrop.hidden = true; $("gear").focus({ preventScroll: true }); });
+  const veil = backdrop.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 220, easing: "ease-in", fill: "forwards" });
+  const out = sheet.animate([{ transform: getComputedStyle(sheet).transform, opacity: 1 }, { transform: "translateY(80px)", opacity: 0 }], { duration: 220, easing: "ease-in", fill: "forwards" });
+  afterAnimation(out, () => {
+    sheet.hidden = backdrop.hidden = true;
+    veil.cancel();
+    out.cancel();
+    sheet.style.transform = "";
+    document.body.style.overflow = "";
+    $("gear").focus({ preventScroll: true });
+  });
 }
+
+// Dragging the head of the sheet downwards dismisses it, as a native sheet would.
+const head = $("sheetHead");
+let drag = null;
+head.addEventListener("pointerdown", (e) => {
+  if (e.button !== 0) return;
+  drag = { y: e.clientY, dy: 0 };
+  head.setPointerCapture(e.pointerId);
+});
+head.addEventListener("pointermove", (e) => {
+  if (!drag) return;
+  drag.dy = Math.max(0, e.clientY - drag.y);
+  sheet.style.transform = `translateY(${drag.dy}px)`;
+});
+const endDrag = () => {
+  if (!drag) return;
+  const { dy } = drag;
+  drag = null;
+  if (dy > 90) return closeSheet();
+  const back = sheet.animate([{ transform: `translateY(${dy}px)` }, { transform: "none" }], { duration: 260, easing: EASE });
+  sheet.style.transform = "";
+  afterAnimation(back, () => {});
+};
+head.addEventListener("pointerup", endDrag);
+head.addEventListener("pointercancel", endDrag);
 
 // A page in the background does not play its animations, so what follows one runs on a timer too.
 function afterAnimation(animation, fn) {
@@ -637,6 +641,13 @@ document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeSheet
 $("theme").onclick = () => update({ theme: document.documentElement.dataset.theme === "dark" ? "light" : "dark" });
 $("layout").onclick = (e) => { const b = e.target.closest("button"); if (b) update({ layout: b.dataset.value }); };
 $("weekday").onclick = (e) => { const b = e.target.closest("button"); if (b) update({ weekday: Number(b.dataset.value) }); };
+$("restDays").onclick = (e) => {
+  const b = e.target.closest("button");
+  if (!b) return;
+  const day = Number(b.dataset.value);
+  const restDays = settings.restDays.includes(day) ? settings.restDays.filter((d) => d !== day) : [...settings.restDays, day];
+  if (restDays.length < 7) update({ restDays });
+};
 $("weekStart").onclick = (e) => { const b = e.target.closest("button"); if (b) update({ weekStart: Number(b.dataset.value) }); };
 $("decimals").onclick = (e) => { const b = e.target.closest("button"); if (b) update({ decimals: Number(b.dataset.value) }); };
 document.querySelectorAll("[data-time]").forEach((b) => b.addEventListener("click", () => openPicker(b)));

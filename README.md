@@ -35,10 +35,10 @@ the next session are greyed out.
 ## What it does
 
 - A live target, ticking on a rolling counter, with the time left before the reset.
-- Three layouts to choose from: Relief, Dial and Bars.
+- Two layouts to choose from, Relief and Dial, each with the week listed under it.
 - Your reset day and time, your working hours, the first day of the week and the number of
-  decimals, behind the gear, all kept in the browser.
-- Light and dark, following the system until the button at the top picks one.
+  decimals and the days off, behind the gear, all kept in the browser.
+- Light and dark, following the system until the button at the foot of the screen picks one.
 - Installs as an app from the browser menu on a phone, works offline, and reloads itself when
   a new version is published.
 

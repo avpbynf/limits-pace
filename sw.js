@@ -1,5 +1,5 @@
-const CACHE = "pace-v1";
-const FILES = ["./", "index.html", "manifest.webmanifest", "icon.svg"];
+const CACHE = "pace-v2";
+const FILES = ["./", "index.html", "manifest.webmanifest", "icon.svg", "fonts/manrope.woff2"];
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILES)));

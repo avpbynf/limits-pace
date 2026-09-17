@@ -9,9 +9,9 @@
 - Works offline and installs as an app.
 - The target ticks live as a rolling counter, with a configurable number of decimals, and the
   page reloads itself when a new version is published.
-- Neumorphic interface following the system light or dark theme, in three layouts to choose
-  from in the settings: Relief (one pill per working day), Cadran (a dial) and Barres (one
-  column per day). Every setting is kept in the browser.
+- Neumorphic interface following the system light or dark theme, in two layouts to choose
+  from in the settings: Relief (one pill per day) and Dial (an arc), each with the week listed
+  under it. Every setting is kept in the browser.
 - The week is drawn as the calendar week, Monday to Sunday, one gauge per day filling across
   its working hours. Hours outside the current session are shown dark.
 - Working hours may end after midnight, and malformed settings fall back to their defaults.
@@ -32,3 +32,6 @@
 - The counter keeps its digits at four decimals: a digit that changes often rolls faster, the
   reel is recentred without a visible jump, and the columns are put back in place when the
   page comes back to the foreground.
+- Days off can be ticked in the settings: no budget is spent on them and their gauge stays
+  grey. The settings sheet closes by dragging its head down. The font is served with the page,
+  so it is complete offline from the first visit.
