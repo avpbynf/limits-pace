@@ -79,12 +79,12 @@
 
   <section class="card today">
     <div>
-      <div class="label">Début de journée</div>
+      <div class="label" id="startLabel">Début de journée</div>
       <div class="mid" id="todayStart">0%</div>
     </div>
     <div class="arrow">&rarr;</div>
     <div>
-      <div class="label">Fin de journée</div>
+      <div class="label" id="endLabel">Fin de journée</div>
       <div class="mid" id="todayEnd">0%</div>
     </div>
   </section>
@@ -108,13 +108,18 @@
         </select>
         <input id="time" type="time" aria-label="Heure du reset">
       </div>
+      <div class="label" style="margin-top:16px">Journée de travail</div>
+      <div class="settings">
+        <input id="dayStart" type="time" aria-label="Début de journée">
+        <input id="dayEnd" type="time" aria-label="Fin de journée">
+      </div>
     </details>
   </section>
 </main>
 <script>
 const WEEK = 7 * 24 * 3600 * 1000;
 const DAY_NAMES = ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."];
-const DEFAULTS = { weekday: 1, time: "00:00" };
+const DEFAULTS = { weekday: 1, time: "00:00", dayStart: "09:00", dayEnd: "18:00" };
 
 function loadSettings() {
   try {
@@ -147,21 +152,27 @@ function fmtDuration(ms) {
 const settings = loadSettings();
 const $ = (id) => document.getElementById(id);
 $("weekday").value = settings.weekday;
-$("time").value = settings.time;
 $("weekday").onchange = (e) => { settings.weekday = Number(e.target.value); saveSettings(settings); render(); };
-$("time").onchange = (e) => { if (e.target.value) { settings.time = e.target.value; saveSettings(settings); render(); } };
+for (const key of ["time", "dayStart", "dayEnd"]) {
+  $(key).value = settings[key];
+  $(key).onchange = (e) => { if (e.target.value) { settings[key] = e.target.value; saveSettings(settings); render(); } };
+}
 
-// Calendar days covered by the week, cut at local midnight and at both resets.
-function calendarDays(start) {
+function atTime(day, time) {
+  const [h, m] = time.split(":").map(Number);
+  const d = new Date(day);
+  d.setHours(h, m, 0, 0);
+  return d;
+}
+
+// Working hours of each calendar day of the week, clipped to both resets.
+function workDays(start, { dayStart, dayEnd }) {
   const end = new Date(start.getTime() + WEEK);
   const days = [];
-  let from = start;
-  while (from < end) {
-    const midnight = new Date(from);
-    midnight.setHours(24, 0, 0, 0);
-    const to = midnight < end ? midnight : end;
-    days.push({ from, to });
-    from = to;
+  for (let day = atTime(start, "00:00"); day < end; day.setDate(day.getDate() + 1)) {
+    const from = new Date(Math.max(atTime(day, dayStart), start));
+    const to = new Date(Math.min(atTime(day, dayEnd), end));
+    if (from < to) days.push({ from, to, clipped: from > atTime(day, dayStart) || to < atTime(day, dayEnd) });
   }
   return days;
 }
@@ -172,22 +183,25 @@ const fmtHour = (d) => `${String(d.getHours()).padStart(2, "0")}:${String(d.getM
 function render() {
   const now = new Date();
   const start = lastReset(now, settings);
-  const at = (d) => ((d - start) / WEEK) * 100;
+  const days = workDays(start, settings);
+  // The budget is spent during working hours only, so the target stays flat overnight.
+  const total = days.reduce((sum, d) => sum + (d.to - d.from), 0);
+  const at = (t) => (days.reduce((sum, d) => sum + Math.min(Math.max(t - d.from, 0), d.to - d.from), 0) / total) * 100;
   const pct = at(now);
-  const days = calendarDays(start);
-  const today = days.find((d) => d.from <= now && now < d.to);
+  const today = days.find((d) => d.from.toDateString() === now.toDateString());
 
   $("target").innerHTML = `${pct.toFixed(1)}<small>%</small>`;
   $("fill").style.width = `${pct}%`;
   $("today").textContent = `${DAY_NAMES[now.getDay()]} ${now.getDate()}`;
   $("reset").textContent = `Reset dans ${fmtDuration(WEEK - (now - start))}`;
-  $("todayStart").textContent = fmtPct(at(today.from));
-  $("todayEnd").textContent = fmtPct(at(today.to));
+  $("startLabel").textContent = today ? `À ${fmtHour(today.from)}` : "Début de journée";
+  $("endLabel").textContent = today ? `À ${fmtHour(today.to)}` : "Fin de journée";
+  $("todayStart").textContent = today ? fmtPct(at(today.from)) : "-";
+  $("todayEnd").textContent = today ? fmtPct(at(today.to)) : "-";
 
   $("days").innerHTML = days.map((d) => {
     const cls = d === today ? "now" : d.to <= now ? "past" : "";
-    const span = d.from.getHours() || d.from.getMinutes() ? ` dès ${fmtHour(d.from)}`
-      : d.to.getHours() || d.to.getMinutes() ? ` jusqu'à ${fmtHour(d.to)}` : "";
+    const span = d.clipped ? ` ${fmtHour(d.from)}-${fmtHour(d.to)}` : "";
     return `<tr class="${cls}"><td>${DAY_NAMES[d.from.getDay()]} ${d.from.getDate()}<span class="label">${span}</span></td><td>${fmtPct(at(d.from))} &rarr; ${fmtPct(at(d.to))}</td></tr>`;
   }).join("");
 }
