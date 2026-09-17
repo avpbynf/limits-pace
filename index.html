@@ -44,6 +44,7 @@
   .card { background: var(--card); border-radius: 16px; padding: 20px; }
   .label { color: var(--muted); font-size: 14px; }
   .big { font-size: 72px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; margin: 8px 0 16px; }
+  .big .dec { font-size: 36px; }
   .big small { font-size: 32px; color: var(--muted); font-weight: 500; }
   .bar { height: 12px; background: var(--track); border-radius: 6px; overflow: hidden; position: relative; }
   .bar > div { height: 100%; background: var(--fill); width: 0; }
@@ -69,7 +70,7 @@
 <main>
   <section class="card">
     <div class="label">Tu devrais être à</div>
-    <div class="big" id="target">0<small>%</small></div>
+    <div class="big"><span id="int">0</span><span class="dec" id="dec">.0000</span><small>%</small></div>
     <div class="bar"><div id="fill"></div><div class="ticks" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div></div>
     <div class="row">
       <span class="label" id="today">Aujourd'hui</span>
@@ -180,6 +181,17 @@ function workDays(start, { dayStart, dayEnd }) {
 const fmtPct = (x) => `${x.toFixed(1)}%`;
 const fmtHour = (d) => `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 
+let pace = () => 0;
+
+// Four decimals: at a working-hours pace the last one moves every second or so.
+function tick() {
+  const pct = pace(new Date());
+  const [int, dec] = pct.toFixed(4).split(".");
+  $("int").textContent = int;
+  $("dec").textContent = `.${dec}`;
+  $("fill").style.width = `${pct}%`;
+}
+
 function render() {
   const now = new Date();
   const start = lastReset(now, settings);
@@ -187,11 +199,10 @@ function render() {
   // The budget is spent during working hours only, so the target stays flat overnight.
   const total = days.reduce((sum, d) => sum + (d.to - d.from), 0);
   const at = (t) => (days.reduce((sum, d) => sum + Math.min(Math.max(t - d.from, 0), d.to - d.from), 0) / total) * 100;
-  const pct = at(now);
   const today = days.find((d) => d.from.toDateString() === now.toDateString());
 
-  $("target").innerHTML = `${pct.toFixed(1)}<small>%</small>`;
-  $("fill").style.width = `${pct}%`;
+  pace = at;
+  tick();
   $("today").textContent = `${DAY_NAMES[now.getDay()]} ${now.getDate()}`;
   $("reset").textContent = `Reset dans ${fmtDuration(WEEK - (now - start))}`;
   $("startLabel").textContent = today ? `À ${fmtHour(today.from)}` : "Début de journée";
@@ -206,9 +217,24 @@ function render() {
   }).join("");
 }
 
+// Reload on its own when a new version is published, so the page never needs a manual refresh.
+let loadedPage = null;
+async function checkForUpdate() {
+  try {
+    const text = await (await fetch(location.pathname, { cache: "no-store" })).text();
+    if (loadedPage === null) loadedPage = text;
+    else if (text !== loadedPage) location.reload();
+  } catch {}
+}
+
 render();
+checkForUpdate();
+setInterval(tick, 200);
 setInterval(render, 30000);
-document.addEventListener("visibilitychange", () => { if (!document.hidden) render(); });
+setInterval(checkForUpdate, 5 * 60000);
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) { render(); checkForUpdate(); }
+});
 
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
 </script>
