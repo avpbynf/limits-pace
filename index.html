@@ -51,14 +51,14 @@
   .card { border-radius: 22px; background: var(--bg); box-shadow: 10px 10px 22px var(--dark), -10px -10px 22px var(--light); }
   .well { box-shadow: inset 3px 3px 6px var(--dark), inset -3px -3px 6px var(--light); }
   /* The two pages sit in a row: one at a time and snapped on a phone, both at once on a wide screen. */
-  #view { display: flex; gap: 32px; min-height: 0; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain; }
+  #view { display: flex; gap: 32px; min-height: 0; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain; padding: 32px; margin: -32px; scroll-padding-inline: 32px; }
   #view::-webkit-scrollbar { display: none; }
   .pane { flex: 0 0 100%; min-width: 0; scroll-snap-align: start; display: grid; grid-template-rows: auto 1fr; gap: var(--gap); }
 
   .dots { display: flex; gap: 8px; align-items: center; }
   .dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--off); transition: background-color 0.25s, transform 0.25s; }
   .dots i.on { background: var(--accent); transform: scale(1.25); }
-  @media (min-width: 960px) { #view { overflow: visible; } .pane { flex: 1 1 0; } .dots { display: none; } }
+  @media (min-width: 960px) { #view { overflow: visible; padding: 0; margin: 0; } .pane { flex: 1 1 0; } .dots { display: none; } }
   .still * { transition: none !important; }
   /* The week list stretches over the height left under the hero; fit() shrinks the page when even that is too tall. */
   .week { display: flex; flex-direction: column; }
@@ -365,8 +365,7 @@ const slot = (s, i, horizontal) => {
 const stat = (k, val, attr = "") => `<div class="stat well"><div class="k">${k}</div><div class="v" ${attr}>${val}</div></div>`;
 
 // Now: the target this minute, the week as seven pills, and today's hours as one gauge.
-function reliefView(v) {
-  return `
+const nowHero = (v) => `
   <section class="hero">
     <div class="caps">You should be at</div>
     <div class="big" style="margin:12px 0 24px;font-size:clamp(56px,19vw,76px)">${odo()}<span class="unit">%</span></div>
@@ -377,7 +376,9 @@ function reliefView(v) {
       <span class="muted" style="font-size:13px">${v.todayLabel}</span><span style="font-size:15px;font-weight:600">${v.todayRange}</span>
     </div>
     <div class="row num muted" style="margin-top:6px;font-size:13px"><span>${v.todayHours}</span><span>Reset in ${v.left}</span></div>
-  </section>
+  </section>`;
+
+const todayCard = (v) => `
   <section class="card now-card" style="padding:16px 18px 14px">
     <div class="row caps-sm"><span>Today</span><span>${v.todayHours}</span></div>
     <div class="strips" style="height:18px" aria-hidden="true">
@@ -392,12 +393,10 @@ function reliefView(v) {
     </div>
     <div class="row num" style="font-size:13px"><span class="muted">${v.nextLabel}</span><span style="font-weight:600">${v.nextRange}</span></div>
   </section>`;
-}
 
 // Week: the target on an arc, then one line per day of the week with its hours as a gauge and
 // the targets it starts and ends on.
-function cadranView(v) {
-  return `
+const weekHero = (v) => `
   <section class="hero" style="border-radius:34px;display:grid;gap:16px;justify-items:center">
     <div class="caps">You should be at</div>
     <div class="dial">
@@ -410,7 +409,9 @@ function cadranView(v) {
       ${stat("Start", v.todayFrom)}${stat("End", v.todayTo)}${stat("Reset", v.left)}
     </div>
     <div class="num muted" style="font-size:13px;white-space:nowrap">${v.todayLabel} · ${v.todayHours}</div>
-  </section>
+  </section>`;
+
+const weekCard = (v) => `
   <section class="card week" style="padding:8px 18px 6px">
     <div class="row caps-sm" style="padding:10px 2px 8px"><span>Week</span><span>start → end</span></div>
     ${v.slots.map((d, i) => `<div class="row num day ${d.isToday ? "today" : d.isPast ? "past" : ""}" style="gap:12px;${d.isToday ? "font-weight:600" : ""}">
@@ -419,12 +420,15 @@ function cadranView(v) {
       <span style="flex:0 0 auto;min-width:118px;text-align:right;font-size:13px">${d.range}</span>
     </div>`).join("")}
   </section>`;
-}
 
-const VIEWS = { relief: reliefView, cadran: cadranView };
+const VIEWS = { relief: (v) => nowHero(v) + todayCard(v), cadran: (v) => weekHero(v) + weekCard(v) };
+// On a wide screen everything shows once: the arc, the number and today on the left, the
+// week on the right, stretched to the same height.
+const wideQuery = matchMedia("(min-width: 960px)");
+const wideView = (v) => `<div class="pane">${weekHero(v)}${todayCard(v)}</div><div class="pane" style="grid-template-rows:1fr">${weekCard(v)}</div>`;
 
 // The page shown: scrolled to on a phone, remembered as the layout setting.
-const pageStep = (view) => view.clientWidth + 32;
+const pageStep = (view) => view.clientWidth - 64 + 32;
 function showPage(index, smooth) {
   const view = $("view");
   view.scrollTo({ left: index * pageStep(view), behavior: smooth ? "smooth" : "instant" });
@@ -529,12 +533,13 @@ function render() {
   // Rebuilding the view would restart the counter, so keep its node across refreshes.
   const view = $("view");
   const kept = [...view.querySelectorAll("[data-odo]")];
-  view.innerHTML = LAYOUTS.map((l) => `<div class="pane">${VIEWS[l](v)}</div>`).join("");
+  view.innerHTML = wideQuery.matches ? wideView(v) : LAYOUTS.map((l) => `<div class="pane">${VIEWS[l](v)}</div>`).join("");
   view.querySelectorAll("[data-odo]").forEach((el, i) => { if (kept[i]) el.replaceWith(kept[i]); });
-  showPage(LAYOUTS.indexOf(settings.layout), false);
+  if (!wideQuery.matches) showPage(LAYOUTS.indexOf(settings.layout), false);
   tick();
   fit();
 }
+wideQuery.addEventListener("change", render);
 
 // The page fills the screen and never scrolls: the week list takes the room left, and when the
 // content is taller than the screen even so, the whole of it is scaled down to fit.
@@ -551,7 +556,7 @@ function fit() {
   mainEl.style.minHeight = `${room / zoom}px`;
 }
 let refit = null;
-addEventListener("resize", () => { clearTimeout(refit); refit = setTimeout(() => { fit(); showPage(LAYOUTS.indexOf(settings.layout), false); }, 80); });
+addEventListener("resize", () => { clearTimeout(refit); refit = setTimeout(() => { fit(); if (!wideQuery.matches) showPage(LAYOUTS.indexOf(settings.layout), false); }, 80); });
 document.fonts.ready.then(fit);
 
 // The reset-day row follows the chosen first day of the week.

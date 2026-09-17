@@ -12,7 +12,7 @@
 - Neumorphic interface following the system light or dark theme, in two pages: Now (the target
   this minute, the week as seven pills, today as one gauge) and Week (the target on an arc, one
   gauge per day with its targets). A swipe moves between them on a phone; a wide screen shows
-  both. Every setting is kept in the browser.
+  the arc and today beside the week, once. Every setting is kept in the browser.
 - The week is drawn as the calendar week, Monday to Sunday, one gauge per day filling across
   its working hours. Hours outside the current session are shown dark.
 - Working hours may end after midnight, and malformed settings fall back to their defaults.
@@ -46,3 +46,4 @@
   snapped, and the counter reads as its value to a screen reader.
 - A layout and a moment can be named in the address, to open the page on a given view or look
   at it at a given time; neither is kept.
+- The paged view keeps room for the shadows of the cards instead of clipping them at its sides.

@@ -33,8 +33,8 @@ the next session are greyed out.
 ## What it does
 
 - A live target, ticking on a rolling counter, with the time left before the reset.
-- Two pages, Now and Week: a swipe moves between them on a phone, a wide screen shows both side
-  by side.
+- Two pages, Now and Week, a swipe apart on a phone. A wide screen shows everything once: the
+  arc and today on the left, the week on the right.
 - Your reset day and time, your working hours, the first day of the week and the number of
   decimals and the days off, behind the gear, all kept in the browser.
 - Light and dark, following the system until the button at the foot of the screen picks one.
