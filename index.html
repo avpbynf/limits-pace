@@ -60,8 +60,6 @@
   .pill > div { border-radius: 14px; box-shadow: inset 4px 4px 8px var(--dark), inset -4px -4px 8px var(--light); }
   .fill { position: absolute; left: 0; right: 0; bottom: 0; background: var(--accent); height: 0; }
   .fill.h { top: 0; right: auto; width: 0; height: auto; }
-  .off { position: absolute; left: 0; right: 0; background: repeating-linear-gradient(135deg, var(--hair) 0 3px, transparent 3px 7px), color-mix(in srgb, var(--bg) 72%, transparent); }
-  .off.h { top: 0; bottom: 0; right: auto; }
   .ring { outline: 2px solid var(--accent); outline-offset: 3px; }
 
   .dial { width: 262px; height: 262px; border-radius: 50%; position: relative; box-shadow: inset 6px 6px 12px var(--dark), inset -6px -6px 12px var(--light); }
@@ -230,9 +228,7 @@ function updateOdo(el, text) {
 }
 
 const odo = () => `<span class="odo" data-odo></span>`;
-// A slot is 24 hours from the reset; the hours outside the working day are greyed inside it.
-const slot = (s, i, horizontal) => `<div class="fill${horizontal ? " h" : ""}" data-fill="${i}"></div>` +
-  s.off.map(([a, b]) => `<div class="off${horizontal ? " h" : ""}" style="${horizontal ? "left" : "bottom"}:${(a * 100).toFixed(2)}%;${horizontal ? "width" : "height"}:${((b - a) * 100).toFixed(2)}%"></div>`).join("");
+const slot = (s, i, horizontal) => `<div class="fill${horizontal ? " h" : ""}" data-fill="${i}"></div>`;
 
 function reliefView(v) {
   return `
@@ -317,8 +313,7 @@ function tick() {
   const arc = document.querySelector("[data-arc]");
   if (arc) arc.style.background = `conic-gradient(var(--accent) ${(target * 3.6).toFixed(2)}deg, var(--track) 0)`;
   document.querySelectorAll("[data-fill]").forEach((el) => {
-    const d = slots[el.dataset.fill];
-    const f = `${(Math.min(Math.max((now - d.from) / DAY, 0), 1) * 100).toFixed(2)}%`;
+    const f = `${(slots[el.dataset.fill].progress(now) * 100).toFixed(2)}%`;
     if (el.classList.contains("h")) el.style.width = f; else el.style.height = f;
   });
 }
@@ -333,16 +328,12 @@ function render() {
   const today = days.find((d) => d.from <= now && now < d.to)
     || days.find((d) => d.from.toDateString() === now.toDateString());
   pace = at;
+  // One slot per 24 hours from the reset, holding a seventh of the budget. It fills during the
+  // working hours it contains and holds still outside them.
   slots = Array.from({ length: 7 }, (_, i) => {
     const from = new Date(start.getTime() + i * DAY), to = new Date(from.getTime() + DAY);
-    // Working stretches inside the slot, as fractions, then their complement.
-    const work = days.filter((d) => d.from < to && d.to > from)
-      .map((d) => [(Math.max(d.from, from) - from) / DAY, (Math.min(d.to, to) - from) / DAY]);
-    const off = [];
-    let cursor = 0;
-    for (const [a, b] of work) { if (a > cursor) off.push([cursor, a]); cursor = b; }
-    if (cursor < 1) off.push([cursor, 1]);
-    return { from, to, off };
+    const progress = (t) => (at(Math.min(Math.max(t, from), to)) - at(from)) / ((at(to) - at(from)) || 1);
+    return { from, to, progress };
   });
   const current = slots.find((s) => s.from <= now && now < s.to);
 
@@ -354,7 +345,7 @@ function render() {
       fromPct: pct(at(d.from)), toPct: pct(at(d.to)),
     })),
     slots: slots.map((s) => ({
-      off: s.off, letter: DAY_LETTERS[s.from.getDay()], toShort: pctShort(at(s.to)),
+      letter: DAY_LETTERS[s.from.getDay()], toShort: pctShort(at(s.to)),
       isToday: s === current, isPast: s.to <= now,
     })),
     todayLabel: `Aujourd'hui, ${DAY_NAMES[now.getDay()]} ${now.getDate()}`,

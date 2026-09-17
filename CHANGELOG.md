@@ -12,6 +12,6 @@
 - Neumorphic interface following the system light or dark theme, in three layouts to choose
   from in the settings: Relief (one pill per working day), Cadran (a dial) and Barres (one
   column per day). Every setting is kept in the browser.
-- The week is drawn as seven equal 24-hour slots starting at the reset, with the hours outside
-  the working day greyed inside each slot.
+- The week is drawn as seven equal 24-hour slots starting at the reset, each a gauge of that
+  day's share of the budget that only moves during working hours.
 - Working hours may end after midnight, and malformed settings fall back to their defaults.
