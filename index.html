@@ -139,12 +139,20 @@ const DAY_NAMES = ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."];
 const DAY_LETTERS = ["D", "L", "M", "M", "J", "V", "S"];
 const DEFAULTS = { layout: "relief", weekday: 1, time: "00:00", dayStart: "09:00", dayEnd: "18:00", decimals: 3 };
 
+const VALID = {
+  layout: (v) => ["relief", "cadran", "barres"].includes(v),
+  weekday: (v) => Number.isInteger(v) && v >= 0 && v <= 6,
+  time: (v) => /^([01]\d|2[0-3]):[0-5]\d$/.test(v),
+  dayStart: (v) => VALID.time(v),
+  dayEnd: (v) => VALID.time(v),
+  decimals: (v) => Number.isInteger(v) && v >= 0 && v <= 4,
+};
+
+// Anything missing or malformed in storage falls back to its default.
 function loadSettings() {
-  try {
-    return { ...DEFAULTS, ...JSON.parse(localStorage.getItem("settings") || "{}") };
-  } catch {
-    return { ...DEFAULTS };
-  }
+  let stored = {};
+  try { stored = JSON.parse(localStorage.getItem("settings") || "{}") || {}; } catch {}
+  return Object.fromEntries(Object.entries(DEFAULTS).map(([k, d]) => [k, VALID[k](stored[k]) ? stored[k] : d]));
 }
 
 function saveSettings(settings) {
@@ -168,14 +176,20 @@ function atTime(day, time) {
   return d;
 }
 
-// Working hours of each calendar day of the week, clipped to both resets.
+// Working hours of each calendar day of the week, clipped to both resets. An end at or before
+// the start runs past midnight, and an end equal to the start makes a full 24-hour day.
 function workDays(start, { dayStart, dayEnd }) {
   const end = new Date(start.getTime() + WEEK);
   const days = [];
-  for (let day = atTime(start, "00:00"); day < end; day.setDate(day.getDate() + 1)) {
-    const from = new Date(Math.max(atTime(day, dayStart), start));
-    const to = new Date(Math.min(atTime(day, dayEnd), end));
-    if (from < to) days.push({ from, to, clipped: from > atTime(day, dayStart) || to < atTime(day, dayEnd) });
+  const day = atTime(start, "00:00");
+  day.setDate(day.getDate() - 1);
+  for (; day < end; day.setDate(day.getDate() + 1)) {
+    const workStart = atTime(day, dayStart);
+    const workEnd = atTime(day, dayEnd);
+    if (workEnd <= workStart) workEnd.setDate(workEnd.getDate() + 1);
+    const from = new Date(Math.max(workStart, start));
+    const to = new Date(Math.min(workEnd, end));
+    if (from < to) days.push({ from, to, clipped: from > workStart || to < workEnd });
   }
   return days;
 }
@@ -316,7 +330,8 @@ function render() {
   // The budget is spent during working hours only, so the target stays flat overnight.
   const total = days.reduce((sum, d) => sum + (d.to - d.from), 0) || 1;
   const at = (t) => (days.reduce((sum, d) => sum + Math.min(Math.max(t - d.from, 0), d.to - d.from), 0) / total) * 100;
-  const today = days.find((d) => d.from.toDateString() === now.toDateString());
+  const today = days.find((d) => d.from <= now && now < d.to)
+    || days.find((d) => d.from.toDateString() === now.toDateString());
   pace = at;
   slots = Array.from({ length: 7 }, (_, i) => {
     const from = new Date(start.getTime() + i * DAY), to = new Date(from.getTime() + DAY);
@@ -369,7 +384,7 @@ function syncSettings() {
 }
 
 function update(patch) {
-  Object.assign(settings, patch);
+  for (const [k, v] of Object.entries(patch)) if (VALID[k](v)) settings[k] = v;
   saveSettings(settings);
   syncSettings();
   render();
@@ -385,7 +400,7 @@ $("layout").onclick = (e) => { const b = e.target.closest("button"); if (b) upda
 $("decimals").onclick = (e) => { const b = e.target.closest("button"); if (b) update({ decimals: Number(b.dataset.value) }); };
 $("weekday").onchange = (e) => update({ weekday: Number(e.target.value) });
 for (const key of ["time", "dayStart", "dayEnd"]) {
-  $(key).onchange = (e) => { if (e.target.value) update({ [key]: e.target.value }); };
+  $(key).onchange = (e) => update({ [key]: e.target.value.slice(0, 5) });
 }
 
 // Reload on its own when a new version is published, so the page never needs a manual refresh.

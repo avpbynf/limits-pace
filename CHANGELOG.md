@@ -14,3 +14,4 @@
   column per day). Every setting is kept in the browser.
 - The week is drawn as seven equal 24-hour slots starting at the reset, with the hours outside
   the working day greyed inside each slot.
+- Working hours may end after midnight, and malformed settings fall back to their defaults.
