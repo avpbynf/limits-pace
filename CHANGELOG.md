@@ -9,9 +9,10 @@
 - Works offline and installs as an app.
 - The target ticks live as a rolling counter, with a configurable number of decimals, and the
   page reloads itself when a new version is published.
-- Neumorphic interface following the system light or dark theme, in two layouts to choose
-  from in the settings: Relief (one pill per day) and Dial (an arc), each with the week listed
-  under it. Every setting is kept in the browser.
+- Neumorphic interface following the system light or dark theme, in two pages: Now (the target
+  this minute, the week as seven pills, today as one gauge) and Week (the target on an arc, one
+  gauge per day with its targets). A swipe moves between them on a phone; a wide screen shows
+  both. Every setting is kept in the browser.
 - The week is drawn as the calendar week, Monday to Sunday, one gauge per day filling across
   its working hours. Hours outside the current session are shown dark.
 - Working hours may end after midnight, and malformed settings fall back to their defaults.

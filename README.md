@@ -15,10 +15,10 @@
 ---
 
 <p align="center">
-  <img src="docs/layouts-dark.png" width="760" alt="The two layouts side by side. Relief: the target percentage on a rolling counter, one gauge per day of the week, today's range and the time left before the reset, then the start and end target of every day. Dial: the same target on an arc, with today's start, end and the time left, then the same week list.">
+  <img src="docs/layouts-dark.png" width="760" alt="The two pages side by side. Now: the target percentage on a rolling counter, one pill per day of the week, today as a gauge with its hours, start, now and end, the time left today and the pace per hour. Week: the target on an arc, then one gauge per day of the week with the targets it starts and ends on.">
 </p>
 <p align="center">
-  <sub>The two layouts, Relief and Dial: the target right now, the week as seven gauges, and where each day starts and ends.</sub>
+  <sub>The two pages. Now: the target this minute, the week as seven pills, today as one gauge with its hours. Week: the target on an arc, then one gauge per day with the targets it starts and ends on.</sub>
 </p>
 
 A weekly budget of 100% is easy to burn in two days. Limits Pace shows the one number that
@@ -33,7 +33,8 @@ the next session are greyed out.
 ## What it does
 
 - A live target, ticking on a rolling counter, with the time left before the reset.
-- Two layouts to choose from, Relief and Dial, each with the week listed under it.
+- Two pages, Now and Week: a swipe moves between them on a phone, a wide screen shows both side
+  by side.
 - Your reset day and time, your working hours, the first day of the week and the number of
   decimals and the days off, behind the gear, all kept in the browser.
 - Light and dark, following the system until the button at the foot of the screen picks one.

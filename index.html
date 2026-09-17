@@ -38,7 +38,8 @@
     display: flex; justify-content: center;
     padding: var(--frame) max(16px, env(safe-area-inset-right)) var(--frame) max(16px, env(safe-area-inset-left));
   }
-  main { width: 100%; max-width: 440px; min-height: calc(100svh - 2 * var(--frame)); display: grid; grid-template-rows: 1fr auto; gap: var(--gap); }
+  main { width: 100%; max-width: 440px; min-height: calc(100svh - 2 * var(--frame)); display: grid; grid-template-rows: 1fr auto; gap: var(--frame); }
+  @media (min-width: 960px) { main { max-width: 912px; } }
   button { all: unset; font: inherit; -webkit-tap-highlight-color: transparent; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
   button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   .num { font-variant-numeric: tabular-nums; }
@@ -49,9 +50,19 @@
   .hero { border-radius: 30px; padding: 26px 22px 24px; background: var(--bg); box-shadow: 14px 14px 30px var(--dark), -12px -12px 26px var(--light), inset 0 0 0 1px var(--hi); }
   .card { border-radius: 22px; background: var(--bg); box-shadow: 10px 10px 22px var(--dark), -10px -10px 22px var(--light); }
   .well { box-shadow: inset 3px 3px 6px var(--dark), inset -3px -3px 6px var(--light); }
-  #view { display: grid; grid-template-rows: auto 1fr; gap: var(--gap); min-height: 0; }
+  /* The two pages sit in a row: one at a time and snapped on a phone, both at once on a wide screen. */
+  #view { display: flex; gap: 32px; min-height: 0; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain; }
+  #view::-webkit-scrollbar { display: none; }
+  .pane { flex: 0 0 100%; min-width: 0; scroll-snap-align: start; display: grid; grid-template-rows: auto 1fr; gap: var(--gap); }
+
+  .dots { display: flex; gap: 8px; align-items: center; }
+  .dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--off); transition: background-color 0.25s, transform 0.25s; }
+  .dots i.on { background: var(--accent); transform: scale(1.25); }
+  @media (min-width: 960px) { #view { overflow: visible; } .pane { flex: 1 1 0; } .dots { display: none; } }
+  .still * { transition: none !important; }
   /* The week list stretches over the height left under the hero; fit() shrinks the page when even that is too tall. */
   .week { display: flex; flex-direction: column; }
+  .now-card { display: flex; flex-direction: column; justify-content: space-between; gap: 14px; }
   .week .day { flex: 1; align-items: center; min-height: 30px; padding: 4px 2px; border-top: 1px solid var(--hair); font-size: 14px; }
   .big { display: flex; align-items: baseline; gap: 8px; font-weight: 800; line-height: 1; letter-spacing: -0.02em; }
   .big .unit { font-size: 0.34em; color: var(--muted); font-weight: 600; }
@@ -129,6 +140,7 @@
       <svg class="sun" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
       <svg class="moon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
     </button>
+    <div class="dots" id="dots" aria-hidden="true"><i></i><i></i></div>
     <button type="button" id="gear" class="knob" aria-label="Settings" aria-haspopup="dialog">
       <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
     </button>
@@ -147,11 +159,6 @@
   </div>
   </div>
   <div id="settings" style="display:grid;gap:10px">
-      <div class="caps-sm" style="margin-top:12px">Layout</div>
-      <div class="segmented well" role="radiogroup" aria-label="Layout" id="layout">
-        <button type="button" role="radio" data-value="relief">Relief</button>
-        <button type="button" role="radio" data-value="cadran">Dial</button>
-      </div>
       <div class="caps-sm" style="margin-top:12px">Usage reset</div>
       <div class="segmented well" role="radiogroup" aria-label="Reset day" id="weekday"></div>
       <div style="display:flex;gap:12px" data-row>
@@ -273,8 +280,9 @@ const settings = loadSettings();
 const asked = new URLSearchParams(location.search).get("layout");
 if (VALID.layout(asked)) settings.layout = asked;
 // A moment named in the address freezes the clock there, to look at the page at a given time.
-const frozen = new Date(new URLSearchParams(location.search).get("at"));
+const frozen = new Date(new URLSearchParams(location.search).get("at") || NaN);
 const clock = () => Number.isNaN(frozen.getTime()) ? new Date() : new Date(frozen);
+if (!Number.isNaN(frozen.getTime())) document.documentElement.classList.add("still");
 const $ = (id) => document.getElementById(id);
 
 // Rolling counter: one column per position, holding the ten digits three times over so that
@@ -354,6 +362,9 @@ const slot = (s, i, horizontal) => {
     `<div class="fill${horizontal ? " h" : ""}" data-fill="${i}" style="${pos}:${(s.before * 100).toFixed(2)}%"></div>`;
 };
 
+const stat = (k, val, attr = "") => `<div class="stat well"><div class="k">${k}</div><div class="v" ${attr}>${val}</div></div>`;
+
+// Now: the target this minute, the week as seven pills, and today's hours as one gauge.
 function reliefView(v) {
   return `
   <section class="hero">
@@ -367,17 +378,25 @@ function reliefView(v) {
     </div>
     <div class="row num muted" style="margin-top:6px;font-size:13px"><span>${v.todayHours}</span><span>Reset in ${v.left}</span></div>
   </section>
-  ${weekCard(v)}`;
+  <section class="card now-card" style="padding:16px 18px 14px">
+    <div class="row caps-sm"><span>Today</span><span>${v.todayHours}</span></div>
+    <div class="strips" style="height:18px" aria-hidden="true">
+      <div class="strip" style="flex:1"><div>${v.todayIndex >= 0 ? slot(v.slots[v.todayIndex], v.todayIndex, true) : ""}</div></div>
+    </div>
+    <div class="row num muted" style="font-size:12px;margin-top:-8px"><span>${v.dayStart}</span><span>${v.dayEnd}</span></div>
+    <div class="num" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;white-space:nowrap">
+      ${stat("Start", v.todayFrom)}${stat("Now", "", "data-now")}${stat("End", v.todayTo)}
+    </div>
+    <div class="num" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;white-space:nowrap">
+      ${stat("Left today", v.leftToday)}${stat("Per hour", v.perHour)}
+    </div>
+    <div class="row num" style="font-size:13px"><span class="muted">${v.nextLabel}</span><span style="font-weight:600">${v.nextRange}</span></div>
+  </section>`;
 }
 
-const weekCard = (v) => `
-  <section class="card week" style="padding:8px 18px 6px">
-    <div class="row caps-sm" style="padding:10px 2px 8px"><span>Week</span><span>start → end</span></div>
-    ${v.days.map((d) => `<div class="row num day ${d.isToday ? "today" : d.isPast ? "past" : ""}" style="${d.isToday ? "font-weight:600" : ""}"><span>${d.name} ${d.date}${d.clip}</span><span>${d.fromPct} → ${d.toPct}</span></div>`).join("")}
-  </section>`;
-
+// Week: the target on an arc, then one line per day of the week with its hours as a gauge and
+// the targets it starts and ends on.
 function cadranView(v) {
-  const stat = (k, val) => `<div class="stat well"><div class="k">${k}</div><div class="v">${val}</div></div>`;
   return `
   <section class="hero" style="border-radius:34px;display:grid;gap:16px;justify-items:center">
     <div class="caps">You should be at</div>
@@ -387,18 +406,40 @@ function cadranView(v) {
         <div class="big" style="font-size:${[19.5, 18.6, 17, 15.3, 13.6][settings.decimals]}cqw;gap:0.1em">${odo()}<span class="unit">%</span></div>
       </div>
     </div>
-    <div class="strips" aria-hidden="true">
-      ${v.slots.map((d, i) => `<div class="strip" style="flex:1"><div class="${d.isToday ? "ring" : ""}">${slot(d, i, true)}</div></div>`).join("")}
-    </div>
     <div class="num" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;width:100%;white-space:nowrap">
       ${stat("Start", v.todayFrom)}${stat("End", v.todayTo)}${stat("Reset", v.left)}
     </div>
     <div class="num muted" style="font-size:13px;white-space:nowrap">${v.todayLabel} · ${v.todayHours}</div>
   </section>
-  ${weekCard(v)}`;
+  <section class="card week" style="padding:8px 18px 6px">
+    <div class="row caps-sm" style="padding:10px 2px 8px"><span>Week</span><span>start → end</span></div>
+    ${v.slots.map((d, i) => `<div class="row num day ${d.isToday ? "today" : d.isPast ? "past" : ""}" style="gap:12px;${d.isToday ? "font-weight:600" : ""}">
+      <span style="flex:0 0 58px">${d.name} ${d.date}</span>
+      <div class="strip" style="flex:1;height:12px" aria-hidden="true"><div class="${d.isToday ? "ring" : ""}">${slot(d, i, true)}</div></div>
+      <span style="flex:0 0 auto;min-width:118px;text-align:right;font-size:13px">${d.range}</span>
+    </div>`).join("")}
+  </section>`;
 }
 
 const VIEWS = { relief: reliefView, cadran: cadranView };
+
+// The page shown: scrolled to on a phone, remembered as the layout setting.
+const pageStep = (view) => view.clientWidth + 32;
+function showPage(index, smooth) {
+  const view = $("view");
+  view.scrollTo({ left: index * pageStep(view), behavior: smooth ? "smooth" : "instant" });
+  $("dots").querySelectorAll("i").forEach((d, i) => d.classList.toggle("on", i === index));
+}
+let paging = null;
+$("view").addEventListener("scroll", () => {
+  clearTimeout(paging);
+  paging = setTimeout(() => {
+    const view = $("view");
+    const index = Math.max(0, Math.min(LAYOUTS.length - 1, Math.round(view.scrollLeft / pageStep(view))));
+    $("dots").querySelectorAll("i").forEach((d, i) => d.classList.toggle("on", i === index));
+    if (LAYOUTS[index] !== settings.layout) { settings.layout = LAYOUTS[index]; saveSettings(settings); }
+  }, 100);
+}, { passive: true });
 
 let pace = () => 0;
 let slots = [];
@@ -411,6 +452,8 @@ function tick() {
     updateOdo(el, text);
     el.parentElement.setAttribute("aria-label", `${text} %`);
   });
+  const live = document.querySelector("[data-now]");
+  if (live) live.textContent = pct(target);
   const arc = document.querySelector("[data-arc]");
   if (arc) arc.style.background = `conic-gradient(var(--accent) ${(target * 3.6).toFixed(2)}deg, var(--track) 0)`;
   document.querySelectorAll("[data-fill]").forEach((el) => {
@@ -428,6 +471,7 @@ function render() {
   const at = (t) => (days.reduce((sum, d) => sum + Math.min(Math.max(t - d.from, 0), d.to - d.from), 0) / total) * 100;
   const today = days.find((d) => d.from <= now && now < d.to)
     || days.find((d) => d.from.toDateString() === now.toDateString());
+  const next = days.find((d) => d.from > now && d !== today);
   pace = at;
   // One gauge per day of the calendar week, Monday first, spanning that day's working hours.
   // What falls outside the current session is shown dark; the rest fills as time passes.
@@ -459,23 +503,35 @@ function render() {
       isToday: d === today, isPast: d.to <= now,
       fromPct: pct(at(d.from)), toPct: pct(at(d.to)),
     })),
-    slots: slots.map((s) => ({
-      isToday: s === current, before: s.before, after: s.after,
-    })),
+    slots: slots.map((s) => {
+      const day = days.find((d) => d.from.toDateString() === s.day.toDateString());
+      const rest = settings.restDays.includes(s.day.getDay());
+      return {
+        name: DAY_NAMES[s.day.getDay()], date: s.day.getDate(),
+        isToday: s === current, isPast: s.to <= now, before: s.before, after: s.after,
+        range: rest ? "off" : day ? `${pct(at(day.from))} → ${pct(at(day.to))}` : "-",
+      };
+    }),
+    todayIndex: slots.indexOf(current),
+    dayStart: settings.dayStart, dayEnd: settings.dayEnd,
+    nextLabel: next ? `Next, ${DAY_NAMES[next.from.getDay()]} ${next.from.getDate()}` : "Last day of the week",
+    nextRange: next ? `${pct(at(next.from))} → ${pct(at(next.to))}` : "",
     todayLabel: `Today, ${DAY_NAMES[now.getDay()]} ${now.getDate()}`,
     todayRange: today ? `${pct(at(today.from))} → ${pct(at(today.to))}` : "off",
     todayFrom: today ? pct(at(today.from)) : "-",
     todayTo: today ? pct(at(today.to)) : "-",
     todayHours: today ? `${hour(today.from)} → ${hour(today.to)}` : "off",
     left: fmtDuration(end - now),
+    leftToday: today && now < today.to ? fmtDuration(today.to - Math.max(now, today.from)) : "-",
+    perHour: `+${(100 * 3600000 / total).toFixed(2)}`,
   };
 
   // Rebuilding the view would restart the counter, so keep its node across refreshes.
   const view = $("view");
-  const kept = view.querySelector("[data-odo]");
-  view.innerHTML = (VIEWS[settings.layout] || reliefView)(v);
-  if (kept && view.dataset.layout === settings.layout) view.querySelector("[data-odo]").replaceWith(kept);
-  view.dataset.layout = settings.layout;
+  const kept = [...view.querySelectorAll("[data-odo]")];
+  view.innerHTML = LAYOUTS.map((l) => `<div class="pane">${VIEWS[l](v)}</div>`).join("");
+  view.querySelectorAll("[data-odo]").forEach((el, i) => { if (kept[i]) el.replaceWith(kept[i]); });
+  showPage(LAYOUTS.indexOf(settings.layout), false);
   tick();
   fit();
 }
@@ -495,7 +551,7 @@ function fit() {
   mainEl.style.minHeight = `${room / zoom}px`;
 }
 let refit = null;
-addEventListener("resize", () => { clearTimeout(refit); refit = setTimeout(fit, 80); });
+addEventListener("resize", () => { clearTimeout(refit); refit = setTimeout(() => { fit(); showPage(LAYOUTS.indexOf(settings.layout), false); }, 80); });
 document.fonts.ready.then(fit);
 
 // The reset-day row follows the chosen first day of the week.
@@ -511,7 +567,7 @@ function syncSettings() {
     $("weekday").dataset.weekStart = settings.weekStart;
     buildWeekdayRow();
   }
-  for (const id of ["layout", "weekday", "weekStart", "decimals"]) {
+  for (const id of ["weekday", "weekStart", "decimals"]) {
     $(id).querySelectorAll("button").forEach((b) => b.setAttribute("aria-checked", String(b.dataset.value === String(settings[id]))));
   }
   $("restDays").querySelectorAll("button").forEach((b) => {
@@ -560,7 +616,8 @@ function closeSheet() {
   if (sheet.hidden) return;
   closePicker();
   const veil = backdrop.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 220, easing: "ease-in", fill: "forwards" });
-  const out = sheet.animate([{ transform: getComputedStyle(sheet).transform, opacity: 1 }, { transform: "translateY(80px)", opacity: 0 }], { duration: 220, easing: "ease-in", fill: "forwards" });
+  const y = new DOMMatrix(getComputedStyle(sheet).transform).f;
+  const out = sheet.animate([{ transform: `translateY(${y}px)`, opacity: 1 }, { transform: `translateY(${y + 100}px)`, opacity: 0 }], { duration: 220, easing: "ease-in", fill: "forwards" });
   afterAnimation(out, () => {
     sheet.hidden = backdrop.hidden = true;
     veil.cancel();
@@ -578,7 +635,7 @@ let drag = null;
 head.addEventListener("pointerdown", (e) => {
   if (e.button !== 0 || e.target.closest("button")) return;
   drag = { y: e.clientY, dy: 0 };
-  head.setPointerCapture(e.pointerId);
+  try { head.setPointerCapture(e.pointerId); } catch {}
 });
 head.addEventListener("pointermove", (e) => {
   if (!drag) return;
@@ -652,31 +709,17 @@ for (const wheel of Object.values(wheels)) {
 // A change of layout sinks the view into the background, then the new one rises out of it;
 // any other change fades the view in.
 function update(patch) {
-  const from = settings.layout;
   for (const [k, v] of Object.entries(patch)) if (VALID[k](v)) settings[k] = v;
   saveSettings(settings);
   syncSettings();
   applyTheme();
-  const view = $("view");
   if (Object.keys(patch).every((k) => k === "theme")) return;
-  if (settings.layout === from) {
-    const fade = view.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 140, easing: "ease-in", fill: "forwards" });
-    afterAnimation(fade, () => {
-      fade.cancel();
-      render();
-      view.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 260, easing: EASE });
-    });
-    return;
-  }
-  const sink = view.animate(
-    [{ transform: "scale(1)", opacity: 1, filter: "blur(0)" }, { transform: "scale(0.92)", opacity: 0, filter: "blur(3px)" }],
-    { duration: 220, easing: "ease-in", fill: "forwards" });
-  afterAnimation(sink, () => {
-    sink.cancel();
+  const view = $("view");
+  const fade = view.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 140, easing: "ease-in", fill: "forwards" });
+  afterAnimation(fade, () => {
+    fade.cancel();
     render();
-    view.animate(
-      [{ transform: "scale(0.92)", opacity: 0, filter: "blur(3px)" }, { transform: "scale(1)", opacity: 1, filter: "blur(0)" }],
-      { duration: 380, easing: EASE });
+    view.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 260, easing: EASE });
   });
 }
 
@@ -685,7 +728,6 @@ $("close").onclick = closeSheet;
 backdrop.onclick = closeSheet;
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") { if (pickerKey) closePicker(); else closeSheet(); } });
 $("theme").onclick = () => update({ theme: document.documentElement.dataset.theme === "dark" ? "light" : "dark" });
-$("layout").onclick = (e) => { const b = e.target.closest("button"); if (b) update({ layout: b.dataset.value }); };
 $("weekday").onclick = (e) => { const b = e.target.closest("button"); if (b) update({ weekday: Number(b.dataset.value) }); };
 $("restDays").onclick = (e) => {
   const b = e.target.closest("button");
