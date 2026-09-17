@@ -25,9 +25,10 @@
 - The page no longer scrolls when there is nothing below the fold.
 - The interface is in English, set in Manrope, and the calendar week starts on Monday or
   Sunday as chosen in the settings.
-- The settings open in a sheet from the gear at the top right, and a button at the top left
-  switches between light and dark. A change of layout sinks the view into the background and
-  the new one rises out of it.
+- The settings open in a sheet from the gear at the foot of the screen, and the button beside
+  it switches between light and dark, the whole page fading to the other theme. A change of
+  layout sinks the view into the background and the new one rises out of it; any other change
+  crossfades the view.
 - The counter keeps its digits at four decimals: a digit that changes often rolls faster, the
   reel is recentred without a visible jump, and the columns are put back in place when the
   page comes back to the foreground.

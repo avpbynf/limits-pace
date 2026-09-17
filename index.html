@@ -32,13 +32,14 @@
   }
   * { box-sizing: border-box; }
   [hidden] { display: none !important; }
-  html, body { margin: 0; min-height: 100%; background: var(--bg); overscroll-behavior: none; }
+  html, body { margin: 0; min-height: 100%; background: var(--bg); overscroll-behavior: none; transition: background-color 0.35s; }
+  .hero, .card, .knob, .sheet, .well, .segmented button, .chip > div, .stat { transition: background-color 0.35s, box-shadow 0.35s, color 0.35s; }
   body {
     font: 16px/1.4 Manrope, system-ui, -apple-system, "Segoe UI", sans-serif; color: var(--text);
     display: flex; justify-content: center;
     padding: max(28px, env(safe-area-inset-top)) 16px max(28px, env(safe-area-inset-bottom));
   }
-  main { width: 100%; max-width: 440px; display: grid; gap: 20px; align-content: start; }
+  main { width: 100%; max-width: 440px; min-height: calc(100svh - max(28px, env(safe-area-inset-top)) - max(28px, env(safe-area-inset-bottom))); display: grid; grid-template-rows: 1fr auto; gap: 20px; }
   button { all: unset; font: inherit; -webkit-tap-highlight-color: transparent; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
   button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   .num { font-variant-numeric: tabular-nums; }
@@ -49,7 +50,7 @@
   .hero { border-radius: 30px; padding: 26px 22px 24px; background: var(--bg); box-shadow: 14px 14px 30px var(--dark), -12px -12px 26px var(--light), inset 0 0 0 1px var(--hi); }
   .card { border-radius: 22px; background: var(--bg); box-shadow: 10px 10px 22px var(--dark), -10px -10px 22px var(--light); }
   .well { box-shadow: inset 3px 3px 6px var(--dark), inset -3px -3px 6px var(--light); }
-  #view { display: grid; gap: 20px; }
+  #view { display: grid; gap: 20px; align-content: start; }
   .big { display: flex; align-items: baseline; gap: 8px; font-weight: 800; line-height: 1; letter-spacing: -0.02em; }
   .big .unit { font-size: 0.34em; color: var(--muted); font-weight: 600; }
   .past { opacity: 0.5; }
@@ -92,8 +93,8 @@
 
   .segmented { display: flex; padding: 5px; border-radius: 16px; gap: 4px; }
   .segmented button { flex: 1; text-align: center; padding: 9px 0; border-radius: 12px; color: var(--muted); cursor: pointer; transition: color 0.25s, box-shadow 0.25s, background 0.25s; }
-  .topbar { display: flex; justify-content: space-between; }
-  .knob { width: 46px; height: 46px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: var(--muted); cursor: pointer; background: var(--bg); box-shadow: 6px 6px 12px var(--dark), -6px -6px 12px var(--light); transition: box-shadow 0.2s, color 0.2s; }
+  .dock { display: flex; justify-content: space-between; padding: 0 6px; }
+  .knob { width: 46px; height: 46px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: var(--muted); cursor: pointer; background: var(--bg); box-shadow: 6px 6px 12px var(--dark), -6px -6px 12px var(--light); transition: box-shadow 0.2s, color 0.2s, background-color 0.35s; }
   .knob:active { box-shadow: inset 3px 3px 6px var(--dark), inset -3px -3px 6px var(--light); color: var(--accent); }
   .knob.small { width: 36px; height: 36px; }
   /* The button shows the theme it would switch to. */
@@ -123,7 +124,8 @@
 </head>
 <body>
 <main>
-  <header class="topbar">
+  <div id="view"></div>
+  <footer class="dock">
     <button type="button" id="theme" class="knob" aria-label="Switch between light and dark">
       <svg class="sun" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
       <svg class="moon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
@@ -131,8 +133,7 @@
     <button type="button" id="gear" class="knob" aria-label="Settings" aria-haspopup="dialog">
       <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
     </button>
-  </header>
-  <div id="view"></div>
+  </footer>
 </main>
 
 <div id="backdrop" class="backdrop" hidden></div>
@@ -274,7 +275,7 @@ const snap = (col, transform) => {
 };
 const shiftReel = (col, copies) => {
   const style = getComputedStyle(col);
-  const y = new DOMMatrix(style.transform).f + copies * 10 * parseFloat(style.fontSize);
+  const y = new DOMMatrix(style.transform).f - copies * 10 * parseFloat(style.fontSize);
   col.dataset.index = Number(col.dataset.index) + copies * 10;
   snap(col, `translateY(${y}px)`);
 };
@@ -607,9 +608,14 @@ function update(patch) {
   syncSettings();
   applyTheme();
   const view = $("view");
+  if (Object.keys(patch).every((k) => k === "theme")) return;
   if (settings.layout === from) {
-    render();
-    view.animate([{ opacity: 0.4 }, { opacity: 1 }], { duration: 300, easing: EASE });
+    const fade = view.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 140, easing: "ease-in", fill: "forwards" });
+    afterAnimation(fade, () => {
+      fade.cancel();
+      render();
+      view.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 260, easing: EASE });
+    });
     return;
   }
   const sink = view.animate(
