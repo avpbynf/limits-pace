@@ -11,127 +11,130 @@
 <link rel="apple-touch-icon" href="icon.svg">
 <style>
   :root {
-    --bg: #e6e3de;
-    --text: #4a4540;
-    --muted: #8a837a;
-    --dark: #c4c1bd;
-    --light: #ffffff;
-    --accent: #c96442;
+    --bg: #e6e3de; --text: #4a4540; --muted: #8a837a; --dark: #c4c1bd; --light: #ffffff; --accent: #c96442;
+    --hair: rgba(0, 0, 0, 0.06); --hi: rgba(255, 255, 255, 0.5); --track: #d8d4ce;
+    --disc: 0 3px 6px rgba(0, 0, 0, 0.16), 0 1px 1px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.7);
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #2a2825;
-      --text: #e8e2da;
-      --muted: #9a938a;
-      --dark: #1c1b19;
-      --light: #383531;
-      --accent: #e0855f;
+      --bg: #2a2825; --text: #e8e2da; --muted: #9a938a; --dark: #1c1b19; --light: #383531; --accent: #e0855f;
+      --hair: rgba(255, 255, 255, 0.07); --hi: rgba(255, 255, 255, 0.04); --track: #211f1d;
+      --disc: 0 3px 6px rgba(0, 0, 0, 0.55), 0 1px 1px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.07);
     }
   }
   * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { margin: 0; min-height: 100%; background: var(--bg); }
   body {
-    margin: 0;
-    background: var(--bg);
-    color: var(--text);
-    font: 16px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
-    min-height: 100dvh;
-    display: flex;
-    justify-content: center;
-    padding: max(28px, env(safe-area-inset-top)) 16px 28px;
+    font: 16px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; color: var(--text);
+    min-height: 100dvh; display: flex; justify-content: center;
+    padding: max(28px, env(safe-area-inset-top)) 16px max(28px, env(safe-area-inset-bottom));
   }
-  main { width: 100%; max-width: 440px; display: grid; gap: 24px; align-content: start; }
-  .up { background: var(--bg); box-shadow: 8px 8px 16px var(--dark), -8px -8px 16px var(--light); }
-  .in { background: var(--bg); box-shadow: inset 4px 4px 8px var(--dark), inset -4px -4px 8px var(--light); }
-  .card { border-radius: 20px; padding: 22px 20px; }
-  .label { color: var(--muted); font-size: 14px; }
-  .row { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  main { width: 100%; max-width: 440px; display: grid; gap: 20px; align-content: start; }
+  select, input { font: inherit; color: var(--text); border: 0; outline: 0; background: transparent; -webkit-appearance: none; appearance: none; }
+  input[type=time]::-webkit-calendar-picker-indicator { display: none; }
+  button { all: unset; font: inherit; }
+  .num { font-variant-numeric: tabular-nums; }
+  .row { display: flex; white-space: nowrap; justify-content: space-between; gap: 12px; }
+  .muted { color: var(--muted); }
+  .caps { font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  .caps-sm { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  .hero { border-radius: 30px; padding: 26px 22px 24px; background: var(--bg); box-shadow: 14px 14px 30px var(--dark), -12px -12px 26px var(--light), inset 0 0 0 1px var(--hi); }
+  .card { border-radius: 22px; background: var(--bg); box-shadow: 10px 10px 22px var(--dark), -10px -10px 22px var(--light); }
+  .well { box-shadow: inset 3px 3px 6px var(--dark), inset -3px -3px 6px var(--light); }
+  .big { display: flex; align-items: baseline; gap: 8px; font-weight: 700; line-height: 1; letter-spacing: -0.02em; }
+  .big .unit { font-size: 0.34em; color: var(--muted); font-weight: 600; }
+  .past { opacity: 0.5; }
+  .today { color: var(--accent); }
 
-  .big { font-size: 64px; font-weight: 600; line-height: 1; margin: 10px 0 22px; display: flex; align-items: baseline; }
-  .big .sep, .big .unit { font-size: 0.55em; color: var(--muted); }
-  .odo { display: inline-flex; height: 1em; overflow: hidden; font-variant-numeric: tabular-nums; }
-  .odo .col { display: flex; flex-direction: column; transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.5s; }
-  .odo .col.moving { filter: blur(1.5px); }
-  .odo .col span { height: 1em; line-height: 1em; }
+  .odo { display: inline-flex; line-height: 1; height: 1em; font-variant-numeric: tabular-nums; }
+  .odo .sep { opacity: 0.5; margin: 0 0.02em; }
+  .odo .digit { display: inline-block; height: 1em; overflow: hidden; }
+  .odo .col { display: flex; flex-direction: column; transition: transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.35s; will-change: transform; }
+  .odo .col.moving { filter: blur(1.2px); }
+  .odo .col span { display: block; height: 1em; line-height: 1em; }
 
-  .pills { display: flex; gap: 6px; height: 36px; }
-  .pill { border-radius: 10px; position: relative; overflow: hidden; min-width: 8px; }
-  .pill > div { position: absolute; inset: auto 0 0 0; background: var(--accent); height: 0; }
-  .pill.now { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .pills { display: flex; gap: 8px; height: 48px; }
+  .pill { position: relative; min-width: 10px; }
+  .pill > div, .strip > div, .bar { position: absolute; inset: 0; overflow: hidden; }
+  .pill > div { border-radius: 14px; box-shadow: inset 4px 4px 8px var(--dark), inset -4px -4px 8px var(--light); }
+  .fill { position: absolute; left: 0; right: 0; bottom: 0; background: var(--accent); height: 0; }
+  .fill.h { top: 0; right: auto; width: 0; height: auto; }
+  .ring { outline: 2px solid var(--accent); outline-offset: 3px; }
 
-  .today { margin-top: 16px; font-variant-numeric: tabular-nums; }
+  .dial { width: 262px; height: 262px; border-radius: 50%; position: relative; box-shadow: inset 6px 6px 12px var(--dark), inset -6px -6px 12px var(--light); }
+  .dial .arc { position: absolute; inset: 10px; border-radius: 50%; }
+  .dial .face { position: absolute; inset: 30px; border-radius: 50%; background: var(--bg); box-shadow: var(--disc); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; }
+  .strips { display: flex; gap: 6px; height: 14px; width: 100%; }
+  .strip { position: relative; min-width: 8px; }
+  .strip > div { border-radius: 7px; box-shadow: inset 2px 2px 4px var(--dark), inset -2px -2px 4px var(--light); }
+  .strip > div.ring { outline-offset: 2px; }
+  .stat { padding: 10px 6px; border-radius: 14px; text-align: center; }
+  .stat .k { font-size: 11px; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; }
+  .stat .v { font-size: 15px; font-weight: 600; margin-top: 2px; }
+  .chips { display: flex; gap: 6px; }
+  .chip { flex: 1; position: relative; height: 66px; min-width: 0; }
+  .chip > div { position: absolute; inset: 0; border-radius: 18px; display: flex; white-space: nowrap; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-variant-numeric: tabular-nums; }
+  .chip > div.raised { background: var(--bg); box-shadow: 8px 8px 16px var(--dark), -8px -8px 16px var(--light); color: var(--accent); }
 
-  .days { display: grid; gap: 10px; }
-  .day { border-radius: 12px; padding: 10px 14px; font-variant-numeric: tabular-nums; }
-  .day.past { color: var(--muted); }
-  .day.now { color: var(--accent); font-weight: 600; }
+  .columns { display: flex; gap: 8px; align-items: flex-end; }
+  .column { min-width: 0; display: grid; gap: 12px; justify-items: center; }
+  .bar { position: relative; width: 100%; height: 160px; border-radius: 14px; box-shadow: inset 5px 5px 10px var(--dark), inset -5px -5px 10px var(--light); }
 
-  details summary { cursor: pointer; color: var(--muted); list-style: none; }
-  details summary::-webkit-details-marker { display: none; }
-  .settings { display: flex; gap: 12px; margin-top: 12px; }
-  .field-label { margin-top: 18px; }
-  select, input {
-    font: inherit; color: var(--text); border: 0; border-radius: 10px; padding: 10px;
-    flex: 1; min-width: 0; background: var(--bg);
-    box-shadow: inset 3px 3px 6px var(--dark), inset -3px -3px 6px var(--light);
-  }
+  .segmented { display: flex; padding: 5px; border-radius: 16px; gap: 4px; }
+  .segmented button { flex: 1; text-align: center; padding: 9px 0; border-radius: 12px; color: var(--muted); cursor: pointer; }
+  .segmented button[aria-checked=true] { background: var(--bg); box-shadow: 4px 4px 8px var(--dark), -4px -4px 8px var(--light); color: var(--accent); font-weight: 700; cursor: default; }
+  .field { flex: 1; min-width: 0; padding: 12px 14px; border-radius: 14px; display: flex; align-items: center; gap: 6px; font-variant-numeric: tabular-nums; }
+  .field > * { flex: 1; width: 100%; min-width: 0; }
+  .field > span { flex: none; width: auto; color: var(--muted); font-size: 12px; }
 </style>
 </head>
 <body>
 <main>
-  <section class="card up">
-    <div class="label">Tu devrais être à</div>
-    <div class="big" id="target" aria-live="off"></div>
-    <div class="pills" id="pills" aria-hidden="true"></div>
-    <div class="row today">
-      <span class="label" id="today">Aujourd'hui</span>
-      <span id="todayRange">-</span>
-    </div>
-    <div class="row" style="margin-top:6px">
-      <span class="label" id="todayHours"></span>
-      <span class="label" id="reset">Reset dans ...</span>
-    </div>
-  </section>
+  <div id="view" style="display:contents"></div>
 
-  <section class="days" id="days"></section>
-
-  <section class="card up">
-    <details>
-      <summary>Réglages</summary>
-      <div class="label field-label">Début de semaine</div>
-      <div class="settings">
-        <select id="weekday" aria-label="Jour du reset">
-          <option value="1">Lundi</option>
-          <option value="2">Mardi</option>
-          <option value="3">Mercredi</option>
-          <option value="4">Jeudi</option>
-          <option value="5">Vendredi</option>
-          <option value="6">Samedi</option>
-          <option value="0">Dimanche</option>
-        </select>
-        <input id="time" type="time" aria-label="Heure du reset">
+  <section class="card" style="padding:16px 20px">
+    <button type="button" id="toggle" aria-expanded="false" class="row muted" style="display:flex;width:100%;align-items:center;cursor:pointer;font-size:15px">
+      <span>Réglages</span><span id="chevron" style="font-size:12px">▾</span>
+    </button>
+    <div id="settings" hidden style="display:grid;gap:10px;padding-top:6px">
+      <div class="caps-sm" style="margin-top:12px">Affichage</div>
+      <div class="segmented well" role="radiogroup" aria-label="Affichage" id="layout">
+        <button type="button" role="radio" data-value="relief">Relief</button>
+        <button type="button" role="radio" data-value="cadran">Cadran</button>
+        <button type="button" role="radio" data-value="barres">Barres</button>
       </div>
-      <div class="label field-label">Journée de travail</div>
-      <div class="settings">
-        <input id="dayStart" type="time" aria-label="Début de journée">
-        <input id="dayEnd" type="time" aria-label="Fin de journée">
+      <div class="caps-sm" style="margin-top:12px">Début de semaine</div>
+      <div style="display:flex;gap:12px">
+        <div class="field well">
+          <select id="weekday" aria-label="Jour du reset">
+            <option value="1">Lundi</option><option value="2">Mardi</option><option value="3">Mercredi</option><option value="4">Jeudi</option><option value="5">Vendredi</option><option value="6">Samedi</option><option value="0">Dimanche</option>
+          </select><span>▾</span>
+        </div>
+        <div class="field well"><input id="time" type="time" aria-label="Heure du reset"></div>
       </div>
-      <div class="label field-label">Décimales</div>
-      <div class="settings">
-        <select id="decimals" aria-label="Décimales">
-          <option value="0">0</option>
-          <option value="1">1</option>
-          <option value="2">2</option>
-          <option value="3">3</option>
-          <option value="4">4</option>
-        </select>
+      <div class="caps-sm" style="margin-top:12px">Journée de travail</div>
+      <div style="display:flex;gap:12px;align-items:center">
+        <div class="field well"><input id="dayStart" type="time" aria-label="Début de journée"></div>
+        <span class="muted">→</span>
+        <div class="field well"><input id="dayEnd" type="time" aria-label="Fin de journée"></div>
       </div>
-    </details>
+      <div class="caps-sm" style="margin-top:12px">Décimales</div>
+      <div class="segmented well" role="radiogroup" aria-label="Décimales" id="decimals">
+        <button type="button" role="radio" data-value="0">0</button>
+        <button type="button" role="radio" data-value="1">1</button>
+        <button type="button" role="radio" data-value="2">2</button>
+        <button type="button" role="radio" data-value="3">3</button>
+        <button type="button" role="radio" data-value="4">4</button>
+      </div>
+    </div>
   </section>
 </main>
 <script>
 const WEEK = 7 * 24 * 3600 * 1000;
 const DAY_NAMES = ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."];
-const DEFAULTS = { weekday: 1, time: "00:00", dayStart: "09:00", dayEnd: "18:00", decimals: 3 };
+const DAY_LETTERS = ["D", "L", "M", "M", "J", "V", "S"];
+const DEFAULTS = { layout: "relief", weekday: 1, time: "00:00", dayStart: "09:00", dayEnd: "18:00", decimals: 3 };
 
 function loadSettings() {
   try {
@@ -180,36 +183,28 @@ function fmtDuration(ms) {
   return d ? `${d}j ${h}h` : `${h}h ${String(m).padStart(2, "0")}`;
 }
 
-const fmtPct = (x) => `${x.toFixed(1).replace(".", ",")} %`;
-const fmtHour = (d) => `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+const pctShort = (x) => x.toFixed(1).replace(".", ",");
+const pct = (x) => `${pctShort(x)} %`;
+const hour = (d) => `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 
 const settings = loadSettings();
 const $ = (id) => document.getElementById(id);
 
-$("weekday").value = settings.weekday;
-$("weekday").onchange = (e) => { settings.weekday = Number(e.target.value); saveSettings(settings); render(); };
-$("decimals").value = settings.decimals;
-$("decimals").onchange = (e) => { settings.decimals = Number(e.target.value); saveSettings(settings); render(); };
-for (const key of ["time", "dayStart", "dayEnd"]) {
-  $(key).value = settings[key];
-  $(key).onchange = (e) => { if (e.target.value) { settings[key] = e.target.value; saveSettings(settings); render(); } };
-}
-
-// Rolling counter: one column of digits per position, rebuilt only when the shape changes.
-let odoShape = "";
-let odoCols = [];
-function drawTarget(text) {
+// Rolling counter: one column of digits per position, rebuilt only when its shape changes.
+function updateOdo(el, text) {
   const shape = text.replace(/\d/g, "0");
-  if (shape !== odoShape) {
-    odoShape = shape;
-    $("target").innerHTML = [...text].map((ch) => /\d/.test(ch)
-      ? `<span class="odo"><span class="col">${[..."0123456789"].map((d) => `<span>${d}</span>`).join("")}</span></span>`
-      : `<span class="sep">,</span>`).join("") + `<span class="unit">&nbsp;%</span>`;
-    odoCols = [...$("target").querySelectorAll(".col")];
-    odoCols.forEach((col) => col.addEventListener("transitionend", () => col.classList.remove("moving")));
+  if (el.dataset.shape !== shape) {
+    el.dataset.shape = shape;
+    el.innerHTML = [...text].map((ch) => /\d/.test(ch)
+      ? `<span class="digit"><span class="col">${[..."0123456789"].map((d) => `<span>${d}</span>`).join("")}</span></span>`
+      : `<span class="sep">,</span>`).join("");
+    el.querySelectorAll(".col").forEach((col) => col.addEventListener("transitionend", (e) => {
+      if (e.propertyName === "transform") col.classList.remove("moving");
+    }));
   }
+  const cols = el.querySelectorAll(".col");
   [...text.replace(".", "")].forEach((ch, i) => {
-    const col = odoCols[i];
+    const col = cols[i];
     if (col.dataset.digit === ch) return;
     if (col.dataset.digit !== undefined) col.classList.add("moving");
     col.dataset.digit = ch;
@@ -217,43 +212,159 @@ function drawTarget(text) {
   });
 }
 
+const odo = () => `<span class="odo" data-odo></span>`;
+const fill = (i, horizontal) => `<div class="fill${horizontal ? " h" : ""}" data-fill="${i}"></div>`;
+
+function reliefView(v) {
+  return `
+  <section class="hero">
+    <div class="caps">Tu devrais être à</div>
+    <div class="big" style="margin:12px 0 24px;font-size:clamp(56px,19vw,76px)">${odo()}<span class="unit">%</span></div>
+    <div class="pills" aria-hidden="true">
+      ${v.days.map((d, i) => `<div class="pill" style="flex:${d.flex}"><div class="${d.isToday ? "ring" : ""}">${fill(i)}</div></div>`).join("")}
+    </div>
+    <div class="row num" style="align-items:baseline;margin-top:22px">
+      <span class="muted" style="font-size:13px">${v.todayLabel}</span><span style="font-size:15px;font-weight:600">${v.todayRange}</span>
+    </div>
+    <div class="row num muted" style="margin-top:6px;font-size:13px"><span>${v.todayHours}</span><span>Reset dans ${v.left}</span></div>
+  </section>
+  <section class="card" style="padding:8px 18px 6px">
+    <div class="row caps-sm" style="padding:10px 2px 8px"><span>Semaine</span><span>début → fin</span></div>
+    ${v.days.map((d) => `<div class="row num ${d.isToday ? "today" : d.isPast ? "past" : ""}" style="padding:9px 2px;border-top:1px solid var(--hair);font-size:14px;${d.isToday ? "font-weight:600" : ""}"><span>${d.name} ${d.date}${d.clip}</span><span>${d.fromPct} → ${d.toPct}</span></div>`).join("")}
+  </section>`;
+}
+
+function cadranView(v) {
+  const stat = (k, val) => `<div class="stat well"><div class="k">${k}</div><div class="v">${val}</div></div>`;
+  return `
+  <section class="hero" style="border-radius:34px;display:grid;gap:22px;justify-items:center">
+    <div class="caps">Tu devrais être à</div>
+    <div class="dial">
+      <div class="arc" data-arc aria-hidden="true"></div>
+      <div class="face">
+        <div class="big" style="font-size:50px">${odo()}</div>
+        <div class="muted" style="font-size:18px;font-weight:600">%</div>
+      </div>
+    </div>
+    <div class="strips" aria-hidden="true">
+      ${v.days.map((d, i) => `<div class="strip" style="flex:${d.flex}"><div class="${d.isToday ? "ring" : ""}">${fill(i, true)}</div></div>`).join("")}
+    </div>
+    <div class="num" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;width:100%;white-space:nowrap">
+      ${stat("Début", v.todayFrom)}${stat("Fin", v.todayTo)}${stat("Reset", v.left)}
+    </div>
+    <div class="num muted" style="font-size:13px;white-space:nowrap">${v.todayLabel} · ${v.todayHours}</div>
+  </section>
+  <div class="chips">
+    ${v.days.map((d) => d.isToday
+      ? `<div class="chip"><div class="raised"><span style="font-size:14px;font-weight:700">${d.letter}</span><span style="font-size:11px;font-weight:600">${d.toShort}</span></div></div>`
+      : `<div class="chip"><div class="well ${d.isPast ? "past" : ""}"><span style="font-size:14px;font-weight:600">${d.letter}</span><span class="muted" style="font-size:11px">${d.toShort}</span></div></div>`).join("")}
+  </div>`;
+}
+
+function barresView(v) {
+  return `
+  <div style="padding:12px 6px 0">
+    <div class="caps">Tu devrais être à</div>
+    <div class="big" style="margin:14px 0 18px;font-size:clamp(60px,21vw,86px);letter-spacing:-0.03em;text-shadow:3px 3px 6px var(--dark),-3px -3px 6px var(--light)">${odo()}<span class="unit" style="font-size:0.33em;text-shadow:none">%</span></div>
+    <div class="row num muted" style="font-size:13px">
+      <span>${v.todayLabel} · ${v.todayHours}</span><span style="color:var(--text);font-weight:600">${v.todayRangeShort}</span>
+    </div>
+  </div>
+  <section class="hero" style="padding:24px 20px 20px">
+    <div class="columns">
+      ${v.days.map((d, i) => `<div class="column" style="flex:${d.flex}">
+        <div class="bar ${d.isToday ? "ring" : ""}">${fill(i)}</div>
+        <div class="num ${d.isToday ? "today" : d.isPast ? "past" : ""}" style="text-align:center;white-space:nowrap">
+          <div style="font-size:14px;font-weight:${d.isToday ? 700 : 600}">${d.letter}</div>
+          <div class="${d.isToday ? "" : "muted"}" style="font-size:11px;margin-top:2px;${d.isToday ? "font-weight:600" : ""}">${d.toShort}</div>
+        </div>
+      </div>`).join("")}
+    </div>
+  </section>
+  <div class="row num well" style="align-items:center;padding:14px 20px;border-radius:18px;font-size:15px">
+    <span class="muted">Reset</span><span style="font-weight:600">dans ${v.left}</span>
+  </div>`;
+}
+
+const VIEWS = { relief: reliefView, cadran: cadranView, barres: barresView };
+
 let pace = () => 0;
-let pills = [];
+let days = [];
 
 function tick() {
   const now = new Date();
-  drawTarget(pace(now).toFixed(settings.decimals));
-  for (const { el, day } of pills) {
-    const f = Math.min(Math.max((now - day.from) / (day.to - day.from), 0), 1);
-    el.firstChild.style.height = `${f * 100}%`;
-  }
+  const target = pace(now);
+  document.querySelectorAll("[data-odo]").forEach((el) => updateOdo(el, target.toFixed(settings.decimals)));
+  const arc = document.querySelector("[data-arc]");
+  if (arc) arc.style.background = `conic-gradient(var(--accent) ${(target * 3.6).toFixed(2)}deg, var(--track) 0)`;
+  document.querySelectorAll("[data-fill]").forEach((el) => {
+    const d = days[el.dataset.fill];
+    const f = `${(Math.min(Math.max((now - d.from) / (d.to - d.from), 0), 1) * 100).toFixed(2)}%`;
+    if (el.classList.contains("h")) el.style.width = f; else el.style.height = f;
+  });
 }
 
 function render() {
   const now = new Date();
   const start = lastReset(now, settings);
-  const days = workDays(start, settings);
+  days = workDays(start, settings);
   // The budget is spent during working hours only, so the target stays flat overnight.
-  const total = days.reduce((sum, d) => sum + (d.to - d.from), 0);
+  const total = days.reduce((sum, d) => sum + (d.to - d.from), 0) || 1;
   const at = (t) => (days.reduce((sum, d) => sum + Math.min(Math.max(t - d.from, 0), d.to - d.from), 0) / total) * 100;
   const today = days.find((d) => d.from.toDateString() === now.toDateString());
-
-  $("pills").innerHTML = days.map((d) =>
-    `<div class="pill in${d === today ? " now" : ""}" style="flex:${d.to - d.from}"><div></div></div>`).join("");
-  pills = [...$("pills").children].map((el, i) => ({ el, day: days[i] }));
   pace = at;
+
+  const v = {
+    days: days.map((d) => ({
+      name: DAY_NAMES[d.from.getDay()], letter: DAY_LETTERS[d.from.getDay()], date: d.from.getDate(),
+      flex: (d.to - d.from) / 3600000, clip: d.clipped ? ` · ${hour(d.from)}-${hour(d.to)}` : "",
+      isToday: d === today, isPast: d.to <= now,
+      fromPct: pct(at(d.from)), toPct: pct(at(d.to)), toShort: pctShort(at(d.to)),
+    })),
+    todayLabel: `Aujourd'hui, ${DAY_NAMES[now.getDay()]} ${now.getDate()}`,
+    todayRange: today ? `${pct(at(today.from))} → ${pct(at(today.to))}` : "repos",
+    todayRangeShort: today ? `${pctShort(at(today.from))} → ${pctShort(at(today.to))} %` : "repos",
+    todayFrom: today ? pct(at(today.from)) : "-",
+    todayTo: today ? pct(at(today.to)) : "-",
+    todayHours: today ? `${hour(today.from)} → ${hour(today.to)}` : "repos",
+    left: fmtDuration(WEEK - (now - start)),
+  };
+
+  // Rebuilding the view would restart the counter, so keep its node across refreshes.
+  const view = $("view");
+  const kept = view.querySelector("[data-odo]");
+  view.innerHTML = (VIEWS[settings.layout] || reliefView)(v);
+  if (kept && view.dataset.layout === settings.layout) view.querySelector("[data-odo]").replaceWith(kept);
+  view.dataset.layout = settings.layout;
   tick();
+}
 
-  $("today").textContent = `Aujourd'hui, ${DAY_NAMES[now.getDay()]} ${now.getDate()}`;
-  $("todayRange").textContent = today ? `${fmtPct(at(today.from))} → ${fmtPct(at(today.to))}` : "repos";
-  $("todayHours").textContent = today ? `${fmtHour(today.from)} → ${fmtHour(today.to)}` : "";
-  $("reset").textContent = `Reset dans ${fmtDuration(WEEK - (now - start))}`;
+function syncSettings() {
+  for (const id of ["layout", "decimals"]) {
+    $(id).querySelectorAll("button").forEach((b) => b.setAttribute("aria-checked", String(b.dataset.value === String(settings[id]))));
+  }
+  $("weekday").value = settings.weekday;
+  for (const key of ["time", "dayStart", "dayEnd"]) $(key).value = settings[key];
+}
 
-  $("days").innerHTML = days.map((d) => {
-    const cls = d === today ? "now" : d.to <= now ? "past" : "";
-    const span = d.clipped ? ` <span class="label">${fmtHour(d.from)}-${fmtHour(d.to)}</span>` : "";
-    return `<div class="day row in ${cls}"><span>${DAY_NAMES[d.from.getDay()]} ${d.from.getDate()}${span}</span><span>${fmtPct(at(d.from))} → ${fmtPct(at(d.to))}</span></div>`;
-  }).join("");
+function update(patch) {
+  Object.assign(settings, patch);
+  saveSettings(settings);
+  syncSettings();
+  render();
+}
+
+$("toggle").onclick = () => {
+  const open = $("settings").hidden;
+  $("settings").hidden = !open;
+  $("toggle").setAttribute("aria-expanded", String(open));
+  $("chevron").textContent = open ? "▴" : "▾";
+};
+$("layout").onclick = (e) => { const b = e.target.closest("button"); if (b) update({ layout: b.dataset.value }); };
+$("decimals").onclick = (e) => { const b = e.target.closest("button"); if (b) update({ decimals: Number(b.dataset.value) }); };
+$("weekday").onchange = (e) => update({ weekday: Number(e.target.value) });
+for (const key of ["time", "dayStart", "dayEnd"]) {
+  $(key).onchange = (e) => { if (e.target.value) update({ [key]: e.target.value }); };
 }
 
 // Reload on its own when a new version is published, so the page never needs a manual refresh.
@@ -266,6 +377,7 @@ async function checkForUpdate() {
   } catch {}
 }
 
+syncSettings();
 render();
 checkForUpdate();
 setInterval(tick, 250);
