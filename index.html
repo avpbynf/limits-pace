@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1f1d1a">
+<title>Limits Pace</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<style>
+  :root {
+    --bg: #f6f4ef;
+    --card: #ffffff;
+    --text: #1f1d1a;
+    --muted: #6d675e;
+    --track: #e6e1d7;
+    --fill: #c96442;
+    --line: #d9d3c7;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1f1d1a;
+      --card: #2a2724;
+      --text: #f1ede6;
+      --muted: #a39d93;
+      --track: #3a3632;
+      --fill: #e0855f;
+      --line: #3a3632;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
+    min-height: 100dvh;
+    display: flex;
+    justify-content: center;
+    padding: max(24px, env(safe-area-inset-top)) 16px 24px;
+  }
+  main { width: 100%; max-width: 440px; display: grid; gap: 16px; align-content: start; }
+  .card { background: var(--card); border-radius: 16px; padding: 20px; }
+  .label { color: var(--muted); font-size: 14px; }
+  .big { font-size: 72px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; margin: 8px 0 16px; }
+  .big small { font-size: 32px; color: var(--muted); font-weight: 500; }
+  .bar { height: 12px; background: var(--track); border-radius: 6px; overflow: hidden; position: relative; }
+  .bar > div { height: 100%; background: var(--fill); width: 0; }
+  .ticks { position: absolute; inset: 0; display: flex; }
+  .ticks span { flex: 1; border-right: 2px solid var(--card); }
+  .ticks span:last-child { border-right: 0; }
+  .row { display: flex; justify-content: space-between; gap: 12px; margin-top: 12px; font-variant-numeric: tabular-nums; }
+  table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  td { padding: 6px 0; border-bottom: 1px solid var(--line); }
+  td:last-child { text-align: right; }
+  tr.now td { font-weight: 700; }
+  tr.past td { color: var(--muted); }
+  details summary { cursor: pointer; color: var(--muted); }
+  .settings { display: flex; gap: 12px; margin-top: 12px; }
+  select, input { font: inherit; padding: 8px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--text); flex: 1; min-width: 0; }
+</style>
+</head>
+<body>
+<main>
+  <section class="card">
+    <div class="label">Tu devrais être à</div>
+    <div class="big" id="target">0<small>%</small></div>
+    <div class="bar"><div id="fill"></div><div class="ticks" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div></div>
+    <div class="row">
+      <span class="label" id="day">Jour 1 / 7</span>
+      <span class="label" id="reset">Reset dans ...</span>
+    </div>
+  </section>
+
+  <section class="card">
+    <table id="days"></table>
+  </section>
+
+  <section class="card">
+    <details>
+      <summary>Début de semaine</summary>
+      <div class="settings">
+        <select id="weekday" aria-label="Jour du reset">
+          <option value="1">Lundi</option>
+          <option value="2">Mardi</option>
+          <option value="3">Mercredi</option>
+          <option value="4">Jeudi</option>
+          <option value="5">Vendredi</option>
+          <option value="6">Samedi</option>
+          <option value="0">Dimanche</option>
+        </select>
+        <input id="time" type="time" aria-label="Heure du reset">
+      </div>
+    </details>
+  </section>
+</main>
+<script>
+const WEEK = 7 * 24 * 3600 * 1000;
+const DAY_NAMES = ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."];
+const DEFAULTS = { weekday: 1, time: "00:00" };
+
+function loadSettings() {
+  try {
+    return { ...DEFAULTS, ...JSON.parse(localStorage.getItem("settings") || "{}") };
+  } catch {
+    return { ...DEFAULTS };
+  }
+}
+
+function saveSettings(settings) {
+  try { localStorage.setItem("settings", JSON.stringify(settings)); } catch {}
+}
+
+// Most recent reset at or before now, in local time.
+function lastReset(now, { weekday, time }) {
+  const [h, m] = time.split(":").map(Number);
+  const d = new Date(now);
+  d.setHours(h, m, 0, 0);
+  d.setDate(d.getDate() - ((d.getDay() - weekday + 7) % 7));
+  if (d > now) d.setDate(d.getDate() - 7);
+  return d;
+}
+
+function fmtDuration(ms) {
+  const mins = Math.floor(ms / 60000);
+  const d = Math.floor(mins / 1440), h = Math.floor(mins / 60) % 24, m = mins % 60;
+  return d ? `${d}j ${h}h` : `${h}h ${String(m).padStart(2, "0")}`;
+}
+
+function fmtTime(date) {
+  return `${DAY_NAMES[date.getDay()]} ${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+}
+
+const settings = loadSettings();
+const $ = (id) => document.getElementById(id);
+$("weekday").value = settings.weekday;
+$("time").value = settings.time;
+$("weekday").onchange = (e) => { settings.weekday = Number(e.target.value); saveSettings(settings); render(); };
+$("time").onchange = (e) => { if (e.target.value) { settings.time = e.target.value; saveSettings(settings); render(); } };
+
+function render() {
+  const now = new Date();
+  const start = lastReset(now, settings);
+  const elapsed = now - start;
+  const pct = (elapsed / WEEK) * 100;
+  const dayIndex = Math.floor(elapsed / (WEEK / 7));
+
+  $("target").innerHTML = `${pct.toFixed(1)}<small>%</small>`;
+  $("fill").style.width = `${pct}%`;
+  $("day").textContent = `Jour ${dayIndex + 1} / 7`;
+  $("reset").textContent = `Reset dans ${fmtDuration(WEEK - elapsed)}`;
+
+  $("days").innerHTML = Array.from({ length: 7 }, (_, i) => {
+    const end = new Date(start.getTime() + (WEEK / 7) * (i + 1));
+    const cls = i < dayIndex ? "past" : i === dayIndex ? "now" : "";
+    return `<tr class="${cls}"><td>Fin jour ${i + 1}</td><td>${fmtTime(end)}</td><td>${(((i + 1) / 7) * 100).toFixed(1)}%</td></tr>`;
+  }).join("");
+}
+
+render();
+setInterval(render, 30000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) render(); });
+
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+</script>
+</body>
+</html>
