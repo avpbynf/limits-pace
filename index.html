@@ -51,6 +51,10 @@
   .ticks span { flex: 1; border-right: 2px solid var(--card); }
   .ticks span:last-child { border-right: 0; }
   .row { display: flex; justify-content: space-between; gap: 12px; margin-top: 12px; font-variant-numeric: tabular-nums; }
+  .today { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  .today > div:last-child { text-align: right; }
+  .mid { font-size: 36px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .arrow { color: var(--muted); font-size: 28px; }
   table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
   td { padding: 6px 0; border-bottom: 1px solid var(--line); }
   td:last-child { text-align: right; }
@@ -68,8 +72,20 @@
     <div class="big" id="target">0<small>%</small></div>
     <div class="bar"><div id="fill"></div><div class="ticks" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div></div>
     <div class="row">
-      <span class="label" id="day">Jour 1 / 7</span>
+      <span class="label" id="today">Aujourd'hui</span>
       <span class="label" id="reset">Reset dans ...</span>
+    </div>
+  </section>
+
+  <section class="card today">
+    <div>
+      <div class="label">Début de journée</div>
+      <div class="mid" id="todayStart">0%</div>
+    </div>
+    <div class="arrow">&rarr;</div>
+    <div>
+      <div class="label">Fin de journée</div>
+      <div class="mid" id="todayEnd">0%</div>
     </div>
   </section>
 
@@ -128,10 +144,6 @@ function fmtDuration(ms) {
   return d ? `${d}j ${h}h` : `${h}h ${String(m).padStart(2, "0")}`;
 }
 
-function fmtTime(date) {
-  return `${DAY_NAMES[date.getDay()]} ${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
-}
-
 const settings = loadSettings();
 const $ = (id) => document.getElementById(id);
 $("weekday").value = settings.weekday;
@@ -139,22 +151,44 @@ $("time").value = settings.time;
 $("weekday").onchange = (e) => { settings.weekday = Number(e.target.value); saveSettings(settings); render(); };
 $("time").onchange = (e) => { if (e.target.value) { settings.time = e.target.value; saveSettings(settings); render(); } };
 
+// Calendar days covered by the week, cut at local midnight and at both resets.
+function calendarDays(start) {
+  const end = new Date(start.getTime() + WEEK);
+  const days = [];
+  let from = start;
+  while (from < end) {
+    const midnight = new Date(from);
+    midnight.setHours(24, 0, 0, 0);
+    const to = midnight < end ? midnight : end;
+    days.push({ from, to });
+    from = to;
+  }
+  return days;
+}
+
+const fmtPct = (x) => `${x.toFixed(1)}%`;
+const fmtHour = (d) => `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+
 function render() {
   const now = new Date();
   const start = lastReset(now, settings);
-  const elapsed = now - start;
-  const pct = (elapsed / WEEK) * 100;
-  const dayIndex = Math.floor(elapsed / (WEEK / 7));
+  const at = (d) => ((d - start) / WEEK) * 100;
+  const pct = at(now);
+  const days = calendarDays(start);
+  const today = days.find((d) => d.from <= now && now < d.to);
 
   $("target").innerHTML = `${pct.toFixed(1)}<small>%</small>`;
   $("fill").style.width = `${pct}%`;
-  $("day").textContent = `Jour ${dayIndex + 1} / 7`;
-  $("reset").textContent = `Reset dans ${fmtDuration(WEEK - elapsed)}`;
+  $("today").textContent = `${DAY_NAMES[now.getDay()]} ${now.getDate()}`;
+  $("reset").textContent = `Reset dans ${fmtDuration(WEEK - (now - start))}`;
+  $("todayStart").textContent = fmtPct(at(today.from));
+  $("todayEnd").textContent = fmtPct(at(today.to));
 
-  $("days").innerHTML = Array.from({ length: 7 }, (_, i) => {
-    const end = new Date(start.getTime() + (WEEK / 7) * (i + 1));
-    const cls = i < dayIndex ? "past" : i === dayIndex ? "now" : "";
-    return `<tr class="${cls}"><td>Fin jour ${i + 1}</td><td>${fmtTime(end)}</td><td>${(((i + 1) / 7) * 100).toFixed(1)}%</td></tr>`;
+  $("days").innerHTML = days.map((d) => {
+    const cls = d === today ? "now" : d.to <= now ? "past" : "";
+    const span = d.from.getHours() || d.from.getMinutes() ? ` dès ${fmtHour(d.from)}`
+      : d.to.getHours() || d.to.getMinutes() ? ` jusqu'à ${fmtHour(d.to)}` : "";
+    return `<tr class="${cls}"><td>${DAY_NAMES[d.from.getDay()]} ${d.from.getDate()}<span class="label">${span}</span></td><td>${fmtPct(at(d.from))} &rarr; ${fmtPct(at(d.to))}</td></tr>`;
   }).join("");
 }
 
