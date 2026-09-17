@@ -94,6 +94,8 @@
 
   /* The settings live in a sheet rising from the foot of the screen over a dimmed page. */
   .grip { width: 40px; height: 5px; border-radius: 3px; margin: -6px auto 10px; background: var(--off); }
+  @media (pointer: coarse) { #close { display: none; } }
+  @media (pointer: fine) { .grip { display: none; } }
   .backdrop { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.35); z-index: 9; }
   .sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; margin: 0 auto; max-width: 440px; max-height: calc(100dvh - 48px); overflow-y: auto; overscroll-behavior: contain; background: var(--bg); border-radius: 28px 28px 0 0; padding: 18px 22px max(24px, env(safe-area-inset-bottom)); box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.25), inset 0 1px 0 var(--hi); }
   @media (min-width: 480px) { .sheet { bottom: 24px; border-radius: 28px; } }
@@ -529,7 +531,7 @@ function closeSheet() {
 const head = $("sheetHead");
 let drag = null;
 head.addEventListener("pointerdown", (e) => {
-  if (e.button !== 0) return;
+  if (e.button !== 0 || e.target.closest("button")) return;
   drag = { y: e.clientY, dy: 0 };
   head.setPointerCapture(e.pointerId);
 });
