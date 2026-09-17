@@ -35,3 +35,11 @@
 - Days off can be ticked in the settings: no budget is spent on them and their gauge stays
   grey. The settings sheet closes by dragging its head down. The font is served with the page,
   so it is complete offline from the first visit.
+- Both layouts fill the screen without scrolling: the week list takes the room left under the
+  hero and the page scales down when even that is too tall. The frame is the same at the top
+  and the bottom of the screen.
+- The next reset is seven calendar days on, so a clock change no longer shifts it by an hour.
+  The service worker keeps only good answers and always has an offline fallback, and a version
+  missed while offline is picked up at the first fetch that succeeds. The sheet keeps the
+  keyboard focus, Escape closes the picker before the sheet, the wheels commit where they
+  snapped, and the counter reads as its value to a screen reader.
