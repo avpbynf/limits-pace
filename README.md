@@ -9,18 +9,16 @@
 </p>
 
 <p align="center">
-  <a href="https://avpbynf.github.io/Limits-Pace/"><img src="https://img.shields.io/badge/open-avpbynf.github.io%2FLimits--Pace-c96442?style=flat-square" alt="Open the app"></a>
-  <img src="https://img.shields.io/badge/platform-PWA-c96442?style=flat-square" alt="PWA">
-  <img src="https://img.shields.io/badge/works-offline-c96442?style=flat-square" alt="Works offline">
+  <a href="https://avpbynf.github.io/Limits-Pace/">Open it</a> in a browser, or install it from the browser menu on a phone.
 </p>
 
 ---
 
 <p align="center">
-  <img src="docs/relief-dark.png" width="360" alt="The Relief layout: the target percentage on a rolling counter, one gauge per day of the week, today's range and the time left before the reset, then the start and end target of every day">
+  <img src="docs/layouts-dark.png" width="760" alt="The two layouts side by side. Relief: the target percentage on a rolling counter, one gauge per day of the week, today's range and the time left before the reset, then the start and end target of every day. Dial: the same target on an arc, with today's start, end and the time left, then the same week list.">
 </p>
 <p align="center">
-  <sub>What it opens on: the target right now, the week as seven gauges, and where each day starts and ends.</sub>
+  <sub>The two layouts, Relief and Dial: the target right now, the week as seven gauges, and where each day starts and ends.</sub>
 </p>
 
 A weekly budget of 100% is easy to burn in two days. Limits Pace shows the one number that

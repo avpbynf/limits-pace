@@ -43,3 +43,5 @@
   missed while offline is picked up at the first fetch that succeeds. The sheet keeps the
   keyboard focus, Escape closes the picker before the sheet, the wheels commit where they
   snapped, and the counter reads as its value to a screen reader.
+- A layout and a moment can be named in the address, to open the page on a given view or look
+  at it at a given time; neither is kept.

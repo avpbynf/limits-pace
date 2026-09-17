@@ -269,6 +269,12 @@ const pct = (x) => `${x.toFixed(1)} %`;
 const hour = (d) => `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 
 const settings = loadSettings();
+// A layout named in the address is shown without being kept, for a link or a screenshot.
+const asked = new URLSearchParams(location.search).get("layout");
+if (VALID.layout(asked)) settings.layout = asked;
+// A moment named in the address freezes the clock there, to look at the page at a given time.
+const frozen = new Date(new URLSearchParams(location.search).get("at"));
+const clock = () => Number.isNaN(frozen.getTime()) ? new Date() : new Date(frozen);
 const $ = (id) => document.getElementById(id);
 
 // Rolling counter: one column per position, holding the ten digits three times over so that
@@ -398,7 +404,7 @@ let pace = () => 0;
 let slots = [];
 
 function tick() {
-  const now = new Date();
+  const now = clock();
   const target = pace(now);
   const text = target.toFixed(settings.decimals);
   document.querySelectorAll("[data-odo]").forEach((el) => {
@@ -414,7 +420,7 @@ function tick() {
 }
 
 function render() {
-  const now = new Date();
+  const now = clock();
   const start = lastReset(now, settings);
   const days = workDays(start, settings);
   // The budget is spent during working hours only, so the target stays flat overnight.
