@@ -17,4 +17,11 @@
 - Working hours may end after midnight, and malformed settings fall back to their defaults.
 - The settings use custom controls only: the reset day is a row of seven buttons and every
   time is picked on two scrolling wheels, so they work the same on a phone. The hours outside
-  the session are shown in a soft grey instead of black.
+  the session are shown in a soft grey instead of black. A tap on a visible row of a wheel picks
+  it directly.
+- The counter rolls every digit the same way, up when the target grows, without blur. The
+  settings unfold and the page follows them down; a change of layout slides the view towards
+  the chosen tab and any other change fades it in; the gauges ease to their new level.
+- The page no longer scrolls when there is nothing below the fold.
+- The interface is in English, set in Manrope, and the calendar week starts on Monday or
+  Sunday as chosen in the settings.
