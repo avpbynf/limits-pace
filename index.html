@@ -31,7 +31,7 @@
   :root { --gap: 24px; --frame: max(var(--gap), env(safe-area-inset-top), env(safe-area-inset-bottom)); }
   * { box-sizing: border-box; }
   [hidden] { display: none !important; }
-  html, body { margin: 0; min-height: 100%; background: var(--bg); overscroll-behavior: none; transition: background-color 0.35s; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); overscroll-behavior: none; transition: background-color 0.35s; }
   .hero, .card, .knob, .sheet, .well, .segmented button, .stat { transition: background-color 0.35s, box-shadow 0.35s, color 0.35s; }
   body {
     font: 16px/1.4 Manrope, system-ui, -apple-system, "Segoe UI", sans-serif; color: var(--text);
@@ -98,7 +98,7 @@
   :root[data-theme=dark] .knob .moon { display: none; }
 
   /* The settings live in a sheet rising from the foot of the screen over a dimmed page. */
-  .grip { width: 40px; height: 5px; border-radius: 3px; margin: -6px auto 10px; background: var(--off); }
+  .grip { width: 40px; height: 5px; border-radius: 3px; margin: 0 auto 10px; background: var(--off); }
   @media (pointer: coarse) { #close { display: none; } }
   @media (pointer: fine) { .grip { display: none; } }
   .backdrop { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.35); z-index: 9; }
@@ -137,12 +137,14 @@
 
 <div id="backdrop" class="backdrop" hidden></div>
 <section id="sheet" class="sheet" role="dialog" aria-modal="true" aria-label="Settings" hidden>
+  <div id="sheetHead" style="touch-action:none;cursor:grab;margin:-18px -22px 0;padding:14px 24px 6px">
   <div class="grip" aria-hidden="true"></div>
-  <div class="row" id="sheetHead" style="align-items:center;padding:4px 2px 2px;touch-action:none;cursor:grab">
+  <div class="row" style="align-items:center;padding:4px 2px 2px">
     <span class="caps">Settings</span>
     <button type="button" id="close" class="knob small" aria-label="Close">
       <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
     </button>
+  </div>
   </div>
   <div id="settings" style="display:grid;gap:10px">
       <div class="caps-sm" style="margin-top:12px">Layout</div>
