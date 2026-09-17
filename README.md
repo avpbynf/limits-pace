@@ -16,6 +16,13 @@
 
 ---
 
+<p align="center">
+  <img src="docs/relief-dark.png" width="360" alt="The Relief layout: the target percentage on a rolling counter, one gauge per day of the week, today's range and the time left before the reset, then the start and end target of every day">
+</p>
+<p align="center">
+  <sub>What it opens on: the target right now, the week as seven gauges, and where each day starts and ends.</sub>
+</p>
+
 A weekly budget of 100% is easy to burn in two days. Limits Pace shows the one number that
 keeps it even: the percentage you should be at, at this very moment, if the week were spent
 at a steady pace. Above it or below it, you know at a glance.
@@ -30,8 +37,8 @@ the next session are greyed out.
 - A live target, ticking on a rolling counter, with the time left before the reset.
 - Three layouts to choose from: Relief, Dial and Bars.
 - Your reset day and time, your working hours, the first day of the week and the number of
-  decimals, all kept in the browser.
-- Light and dark, following the system.
+  decimals, behind the gear, all kept in the browser.
+- Light and dark, following the system until the button at the top picks one.
 - Installs as an app from the browser menu on a phone, works offline, and reloads itself when
   a new version is published.
 

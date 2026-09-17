@@ -3,8 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#e6e3de" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#2a2825" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#2a2825">
 <title>Limits Pace</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -18,12 +17,18 @@
     --hair: rgba(0, 0, 0, 0.06); --hi: rgba(255, 255, 255, 0.5); --track: #d8d4ce; --off: rgba(138, 131, 122, 0.28);
     --disc: 0 3px 6px rgba(0, 0, 0, 0.16), 0 1px 1px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.7);
   }
+  /* Dark follows the system unless the theme button has chosen; the block is stated twice for that. */
   @media (prefers-color-scheme: dark) {
-    :root {
+    :root:not([data-theme=light]) {
       --bg: #2a2825; --text: #e8e2da; --muted: #9a938a; --dark: #1c1b19; --light: #383531; --accent: #e0855f;
       --hair: rgba(255, 255, 255, 0.07); --hi: rgba(255, 255, 255, 0.04); --track: #211f1d; --off: rgba(154, 147, 138, 0.22);
       --disc: 0 3px 6px rgba(0, 0, 0, 0.55), 0 1px 1px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.07);
     }
+  }
+  :root[data-theme=dark] {
+    --bg: #2a2825; --text: #e8e2da; --muted: #9a938a; --dark: #1c1b19; --light: #383531; --accent: #e0855f;
+    --hair: rgba(255, 255, 255, 0.07); --hi: rgba(255, 255, 255, 0.04); --track: #211f1d; --off: rgba(154, 147, 138, 0.22);
+    --disc: 0 3px 6px rgba(0, 0, 0, 0.55), 0 1px 1px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.07);
   }
   * { box-sizing: border-box; }
   [hidden] { display: none !important; }
@@ -87,10 +92,19 @@
 
   .segmented { display: flex; padding: 5px; border-radius: 16px; gap: 4px; }
   .segmented button { flex: 1; text-align: center; padding: 9px 0; border-radius: 12px; color: var(--muted); cursor: pointer; transition: color 0.25s, box-shadow 0.25s, background 0.25s; }
-  /* The settings unfold from zero height; the inner padding keeps the raised shadows unclipped. */
-  .fold { display: grid; grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s; }
-  .fold.open { grid-template-rows: 1fr; opacity: 1; }
-  .fold-in { min-height: 0; overflow: hidden; padding: 0 12px; margin: 0 -12px; }
+  .topbar { display: flex; justify-content: space-between; }
+  .knob { width: 46px; height: 46px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: var(--muted); cursor: pointer; background: var(--bg); box-shadow: 6px 6px 12px var(--dark), -6px -6px 12px var(--light); transition: box-shadow 0.2s, color 0.2s; }
+  .knob:active { box-shadow: inset 3px 3px 6px var(--dark), inset -3px -3px 6px var(--light); color: var(--accent); }
+  .knob.small { width: 36px; height: 36px; }
+  /* The button shows the theme it would switch to. */
+  .knob .sun { display: none; }
+  :root[data-theme=dark] .knob .sun { display: block; }
+  :root[data-theme=dark] .knob .moon { display: none; }
+
+  /* The settings live in a sheet rising from the foot of the screen over a dimmed page. */
+  .backdrop { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.35); z-index: 9; }
+  .sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; margin: 0 auto; max-width: 440px; max-height: calc(100dvh - 48px); overflow-y: auto; overscroll-behavior: contain; background: var(--bg); border-radius: 28px 28px 0 0; padding: 18px 22px max(24px, env(safe-area-inset-bottom)); box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.25), inset 0 1px 0 var(--hi); }
+  @media (min-width: 480px) { .sheet { bottom: 24px; border-radius: 28px; } }
   .segmented button[aria-checked=true] { background: var(--bg); box-shadow: 4px 4px 8px var(--dark), -4px -4px 8px var(--light); color: var(--accent); font-weight: 700; cursor: default; }
   .field { flex: 1; min-width: 0; padding: 12px 14px; border-radius: 14px; display: flex; align-items: center; justify-content: space-between; gap: 6px; font-variant-numeric: tabular-nums; cursor: pointer; }
   .field > span { color: var(--muted); font-size: 12px; }
@@ -109,13 +123,27 @@
 </head>
 <body>
 <main>
-  <div id="view"></div>
-
-  <section class="card" style="padding:16px 20px">
-    <button type="button" id="toggle" aria-expanded="false" class="row muted" style="display:flex;width:100%;align-items:center;cursor:pointer;font-size:15px">
-      <span>Settings</span><span id="chevron" style="font-size:12px">▾</span>
+  <header class="topbar">
+    <button type="button" id="theme" class="knob" aria-label="Switch between light and dark">
+      <svg class="sun" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      <svg class="moon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
     </button>
-    <div id="settings" class="fold" inert><div class="fold-in"><div style="display:grid;gap:10px;padding-top:6px">
+    <button type="button" id="gear" class="knob" aria-label="Settings" aria-haspopup="dialog">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+    </button>
+  </header>
+  <div id="view"></div>
+</main>
+
+<div id="backdrop" class="backdrop" hidden></div>
+<section id="sheet" class="sheet" role="dialog" aria-modal="true" aria-label="Settings" hidden>
+  <div class="row" style="align-items:center;padding:4px 2px 2px">
+    <span class="caps">Settings</span>
+    <button type="button" id="close" class="knob small" aria-label="Close">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>
+  <div id="settings" style="display:grid;gap:10px">
       <div class="caps-sm" style="margin-top:12px">Layout</div>
       <div class="segmented well" role="radiogroup" aria-label="Layout" id="layout">
         <button type="button" role="radio" data-value="relief">Relief</button>
@@ -151,9 +179,8 @@
         <button type="button" role="radio" data-value="3">3</button>
         <button type="button" role="radio" data-value="4">4</button>
       </div>
-    </div></div></div>
-  </section>
-</main>
+  </div>
+</section>
 <script>
 const DAY = 24 * 3600 * 1000;
 const WEEK = 7 * DAY;
@@ -161,7 +188,7 @@ const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const DAY_LETTERS = ["S", "M", "T", "W", "T", "F", "S"];
 const DAY_FULL = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 const LAYOUTS = ["relief", "cadran", "barres"];
-const DEFAULTS = { layout: "relief", weekday: 1, time: "00:00", dayStart: "09:00", dayEnd: "18:00", weekStart: 1, decimals: 3 };
+const DEFAULTS = { layout: "relief", theme: "auto", weekday: 1, time: "00:00", dayStart: "09:00", dayEnd: "18:00", weekStart: 1, decimals: 3 };
 
 const VALID = {
   layout: (v) => ["relief", "cadran", "barres"].includes(v),
@@ -169,6 +196,7 @@ const VALID = {
   time: (v) => /^([01]\d|2[0-3]):[0-5]\d$/.test(v),
   dayStart: (v) => VALID.time(v),
   dayEnd: (v) => VALID.time(v),
+  theme: (v) => ["auto", "light", "dark"].includes(v),
   weekStart: (v) => v === 0 || v === 1,
   decimals: (v) => Number.isInteger(v) && v >= 0 && v <= 4,
 };
@@ -234,14 +262,33 @@ const $ = (id) => document.getElementById(id);
 
 // Rolling counter: one column per position, holding the ten digits three times over so that
 // every column can roll the same way, up when the value grows and down when it drops. A column
-// that has drifted out of the middle copy jumps back to it, unseen, once its roll ends.
+// about to leave the reel is moved back by one whole copy first, from wherever its roll has
+// reached, which the eye cannot tell apart since the reel repeats. A digit that changes often
+// rolls faster, so that each value lands before the next one comes.
 const REEL = "012345678901234567890123456789";
-const setReel = (col, index, animate) => {
-  col.dataset.index = index;
-  if (!animate) col.style.transition = "none";
-  col.style.transform = `translateY(-${index}em)`;
-  if (!animate) { void col.offsetHeight; col.style.transition = ""; }
+const snap = (col, transform) => {
+  col.style.transition = "none";
+  col.style.transform = transform;
+  void col.offsetHeight;
+  col.style.transition = "";
 };
+const shiftReel = (col, copies) => {
+  const style = getComputedStyle(col);
+  const y = new DOMMatrix(style.transform).f + copies * 10 * parseFloat(style.fontSize);
+  col.dataset.index = Number(col.dataset.index) + copies * 10;
+  snap(col, `translateY(${y}px)`);
+};
+
+// In the background the rolls freeze while the digits move on, so every column is put back on
+// its digit, in the middle copy, when the page shows again.
+function settleOdo() {
+  document.querySelectorAll(".odo .col").forEach((col) => {
+    const index = Number(col.dataset.index);
+    if (Number.isNaN(index)) return;
+    col.dataset.index = 10 + (index % 10);
+    snap(col, `translateY(-${10 + (index % 10)}em)`);
+  });
+}
 
 function updateOdo(el, text) {
   const shape = text.replace(/\d/g, "0");
@@ -253,18 +300,31 @@ function updateOdo(el, text) {
       : `<span class="sep">.</span>`).join("");
     el.querySelectorAll(".col").forEach((col) => col.addEventListener("transitionend", () => {
       const index = Number(col.dataset.index);
-      if (index < 10 || index >= 20) setReel(col, 10 + (index % 10), false);
+      if (index < 10 || index >= 20) shiftReel(col, index < 10 ? 1 : -1);
     }));
   }
   const up = el.dataset.value === undefined || Number(text) >= Number(el.dataset.value);
   el.dataset.value = text;
+  const now = performance.now();
   const cols = el.querySelectorAll(".col");
   [...text.replace(".", "")].forEach((ch, i) => {
-    const col = cols[i], digit = Number(ch), index = Number(col.dataset.index);
-    if (Number.isNaN(index)) return setReel(col, 10 + digit, false);
+    const col = cols[i], digit = Number(ch);
+    let index = Number(col.dataset.index);
+    if (Number.isNaN(index)) {
+      col.dataset.index = 10 + digit;
+      return snap(col, `translateY(-${10 + digit}em)`);
+    }
     if (index % 10 === digit) return;
     const step = up ? (digit - index % 10 + 10) % 10 : -((index % 10 - digit + 10) % 10);
-    setReel(col, index + step, true);
+    if (index + step >= 30 || index + step < 0) {
+      shiftReel(col, step > 0 ? -1 : 1);
+      index = Number(col.dataset.index);
+    }
+    const pace = now - Number(col.dataset.at || 0);
+    col.style.transitionDuration = `${Math.round(Math.min(700, Math.max(150, pace * 0.8)))}ms`;
+    col.dataset.at = now;
+    col.dataset.index = index + step;
+    col.style.transform = `translateY(-${index + step}em)`;
   });
 }
 
@@ -455,15 +515,42 @@ function markWheel(wheel, index) {
   wheel.querySelectorAll("div").forEach((d, i) => d.classList.toggle("on", i === index));
 }
 
-// The settings sit at the foot of the page: opening them keeps the page pinned to its end
-// while the panel unfolds, so the whole of it comes into view.
-function scrollToEnd() {
-  const until = performance.now() + 450;
-  const step = () => {
-    window.scrollTo(0, document.documentElement.scrollHeight);
-    if (performance.now() < until) requestAnimationFrame(step);
-  };
-  requestAnimationFrame(step);
+const EASE = "cubic-bezier(0.2, 0.8, 0.2, 1)";
+
+// The theme follows the system until the button picks one; the chosen one is kept.
+const darkQuery = matchMedia("(prefers-color-scheme: dark)");
+function applyTheme() {
+  const dark = settings.theme === "auto" ? darkQuery.matches : settings.theme === "dark";
+  document.documentElement.dataset.theme = dark ? "dark" : "light";
+  document.querySelector("meta[name=theme-color]").content = getComputedStyle(document.documentElement).getPropertyValue("--bg").trim();
+}
+darkQuery.addEventListener("change", applyTheme);
+
+// The settings sheet rises from the foot of the screen and sinks back when dismissed.
+const sheet = $("sheet"), backdrop = $("backdrop");
+function openSheet() {
+  sheet.hidden = backdrop.hidden = false;
+  document.body.style.overflow = "hidden";
+  backdrop.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 250, easing: EASE });
+  sheet.animate([{ transform: "translateY(60px)", opacity: 0 }, { transform: "none", opacity: 1 }], { duration: 320, easing: EASE });
+  sheet.scrollTop = 0;
+  $("close").focus({ preventScroll: true });
+}
+function closeSheet() {
+  if (sheet.hidden) return;
+  closePicker();
+  document.body.style.overflow = "";
+  backdrop.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 200, easing: "ease-in" });
+  const out = sheet.animate([{ transform: "none", opacity: 1 }, { transform: "translateY(60px)", opacity: 0 }], { duration: 220, easing: "ease-in" });
+  afterAnimation(out, () => { sheet.hidden = backdrop.hidden = true; $("gear").focus({ preventScroll: true }); });
+}
+
+// A page in the background does not play its animations, so what follows one runs on a timer too.
+function afterAnimation(animation, fn) {
+  let done = false;
+  const once = () => { if (!done) { done = true; fn(); } };
+  animation.finished.then(once, once);
+  setTimeout(once, animation.effect.getTiming().duration + 50);
 }
 
 function closePicker() {
@@ -480,7 +567,7 @@ function openPicker(btn) {
   btn.setAttribute("aria-expanded", "true");
   btn.closest("[data-row]").after(picker);
   picker.hidden = false;
-  scrollToEnd();
+  requestAnimationFrame(() => picker.scrollIntoView({ block: "nearest", behavior: "smooth" }));
   const [h, m] = settings[key].split(":").map(Number);
   for (const [wheel, index] of [[wheels.h, h], [wheels.m, m]]) {
     wheel.dataset.index = index;
@@ -511,36 +598,37 @@ for (const wheel of Object.values(wheels)) {
   });
 }
 
-// A change of layout slides the view towards the chosen tab; any other change fades it in.
-const EASE = "cubic-bezier(0.2, 0.8, 0.2, 1)";
+// A change of layout sinks the view into the background, then the new one rises out of it;
+// any other change fades the view in.
 function update(patch) {
   const from = settings.layout;
   for (const [k, v] of Object.entries(patch)) if (VALID[k](v)) settings[k] = v;
   saveSettings(settings);
   syncSettings();
+  applyTheme();
   const view = $("view");
   if (settings.layout === from) {
     render();
     view.animate([{ opacity: 0.4 }, { opacity: 1 }], { duration: 300, easing: EASE });
     return;
   }
-  const dir = LAYOUTS.indexOf(settings.layout) > LAYOUTS.indexOf(from) ? 1 : -1;
-  const out = view.animate([{ transform: "none", opacity: 1 }, { transform: `translateX(${-dir * 40}px)`, opacity: 0 }], { duration: 160, easing: "ease-in", fill: "forwards" });
-  out.finished.then(() => {
-    out.cancel();
+  const sink = view.animate(
+    [{ transform: "scale(1)", opacity: 1, filter: "blur(0)" }, { transform: "scale(0.92)", opacity: 0, filter: "blur(3px)" }],
+    { duration: 220, easing: "ease-in", fill: "forwards" });
+  afterAnimation(sink, () => {
+    sink.cancel();
     render();
-    view.animate([{ transform: `translateX(${dir * 40}px)`, opacity: 0 }, { transform: "none", opacity: 1 }], { duration: 280, easing: EASE });
+    view.animate(
+      [{ transform: "scale(0.92)", opacity: 0, filter: "blur(3px)" }, { transform: "scale(1)", opacity: 1, filter: "blur(0)" }],
+      { duration: 380, easing: EASE });
   });
 }
 
-$("toggle").onclick = () => {
-  const open = !$("settings").classList.contains("open");
-  $("settings").classList.toggle("open", open);
-  $("settings").inert = !open;
-  $("toggle").setAttribute("aria-expanded", String(open));
-  $("chevron").textContent = open ? "▴" : "▾";
-  if (open) scrollToEnd(); else closePicker();
-};
+$("gear").onclick = openSheet;
+$("close").onclick = closeSheet;
+backdrop.onclick = closeSheet;
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeSheet(); });
+$("theme").onclick = () => update({ theme: document.documentElement.dataset.theme === "dark" ? "light" : "dark" });
 $("layout").onclick = (e) => { const b = e.target.closest("button"); if (b) update({ layout: b.dataset.value }); };
 $("weekday").onclick = (e) => { const b = e.target.closest("button"); if (b) update({ weekday: Number(b.dataset.value) }); };
 $("weekStart").onclick = (e) => { const b = e.target.closest("button"); if (b) update({ weekStart: Number(b.dataset.value) }); };
@@ -557,6 +645,7 @@ async function checkForUpdate() {
   } catch {}
 }
 
+applyTheme();
 syncSettings();
 render();
 checkForUpdate();
@@ -564,7 +653,7 @@ setInterval(tick, 250);
 setInterval(render, 30000);
 setInterval(checkForUpdate, 5 * 60000);
 document.addEventListener("visibilitychange", () => {
-  if (!document.hidden) { render(); checkForUpdate(); }
+  if (!document.hidden) { settleOdo(); render(); checkForUpdate(); }
 });
 
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
