@@ -3,30 +3,29 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#1f1d1a">
+<meta name="theme-color" content="#e6e3de" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#2a2825" media="(prefers-color-scheme: dark)">
 <title>Limits Pace</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon.svg">
 <style>
   :root {
-    --bg: #f6f4ef;
-    --card: #ffffff;
-    --text: #1f1d1a;
-    --muted: #6d675e;
-    --track: #e6e1d7;
-    --fill: #c96442;
-    --line: #d9d3c7;
+    --bg: #e6e3de;
+    --text: #4a4540;
+    --muted: #8a837a;
+    --dark: #c4c1bd;
+    --light: #ffffff;
+    --accent: #c96442;
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #1f1d1a;
-      --card: #2a2724;
-      --text: #f1ede6;
-      --muted: #a39d93;
-      --track: #3a3632;
-      --fill: #e0855f;
-      --line: #3a3632;
+      --bg: #2a2825;
+      --text: #e8e2da;
+      --muted: #9a938a;
+      --dark: #1c1b19;
+      --light: #383531;
+      --accent: #e0855f;
     }
   }
   * { box-sizing: border-box; }
@@ -38,65 +37,67 @@
     min-height: 100dvh;
     display: flex;
     justify-content: center;
-    padding: max(24px, env(safe-area-inset-top)) 16px 24px;
+    padding: max(28px, env(safe-area-inset-top)) 16px 28px;
   }
-  main { width: 100%; max-width: 440px; display: grid; gap: 16px; align-content: start; }
-  .card { background: var(--card); border-radius: 16px; padding: 20px; }
+  main { width: 100%; max-width: 440px; display: grid; gap: 24px; align-content: start; }
+  .up { background: var(--bg); box-shadow: 8px 8px 16px var(--dark), -8px -8px 16px var(--light); }
+  .in { background: var(--bg); box-shadow: inset 4px 4px 8px var(--dark), inset -4px -4px 8px var(--light); }
+  .card { border-radius: 20px; padding: 22px 20px; }
   .label { color: var(--muted); font-size: 14px; }
-  .big { font-size: 72px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; margin: 8px 0 16px; }
-  .big .dec { font-size: 36px; }
-  .big small { font-size: 32px; color: var(--muted); font-weight: 500; }
-  .bar { height: 12px; background: var(--track); border-radius: 6px; overflow: hidden; position: relative; }
-  .bar > div { height: 100%; background: var(--fill); width: 0; }
-  .ticks { position: absolute; inset: 0; display: flex; }
-  .ticks span { flex: 1; border-right: 2px solid var(--card); }
-  .ticks span:last-child { border-right: 0; }
-  .row { display: flex; justify-content: space-between; gap: 12px; margin-top: 12px; font-variant-numeric: tabular-nums; }
-  .today { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
-  .today > div:last-child { text-align: right; }
-  .mid { font-size: 36px; font-weight: 700; font-variant-numeric: tabular-nums; }
-  .arrow { color: var(--muted); font-size: 28px; }
-  table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
-  td { padding: 6px 0; border-bottom: 1px solid var(--line); }
-  td:last-child { text-align: right; }
-  tr.now td { font-weight: 700; }
-  tr.past td { color: var(--muted); }
-  details summary { cursor: pointer; color: var(--muted); }
+  .row { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+
+  .big { font-size: 64px; font-weight: 600; line-height: 1; margin: 10px 0 22px; display: flex; align-items: baseline; }
+  .big .sep, .big .unit { font-size: 0.55em; color: var(--muted); }
+  .odo { display: inline-flex; height: 1em; overflow: hidden; font-variant-numeric: tabular-nums; }
+  .odo .col { display: flex; flex-direction: column; transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.5s; }
+  .odo .col.moving { filter: blur(1.5px); }
+  .odo .col span { height: 1em; line-height: 1em; }
+
+  .pills { display: flex; gap: 6px; height: 36px; }
+  .pill { border-radius: 10px; position: relative; overflow: hidden; min-width: 8px; }
+  .pill > div { position: absolute; inset: auto 0 0 0; background: var(--accent); height: 0; }
+  .pill.now { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .today { margin-top: 16px; font-variant-numeric: tabular-nums; }
+
+  .days { display: grid; gap: 10px; }
+  .day { border-radius: 12px; padding: 10px 14px; font-variant-numeric: tabular-nums; }
+  .day.past { color: var(--muted); }
+  .day.now { color: var(--accent); font-weight: 600; }
+
+  details summary { cursor: pointer; color: var(--muted); list-style: none; }
+  details summary::-webkit-details-marker { display: none; }
   .settings { display: flex; gap: 12px; margin-top: 12px; }
-  select, input { font: inherit; padding: 8px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--text); flex: 1; min-width: 0; }
+  .field-label { margin-top: 18px; }
+  select, input {
+    font: inherit; color: var(--text); border: 0; border-radius: 10px; padding: 10px;
+    flex: 1; min-width: 0; background: var(--bg);
+    box-shadow: inset 3px 3px 6px var(--dark), inset -3px -3px 6px var(--light);
+  }
 </style>
 </head>
 <body>
 <main>
-  <section class="card">
+  <section class="card up">
     <div class="label">Tu devrais être à</div>
-    <div class="big"><span id="int">0</span><span class="dec" id="dec">.0000</span><small>%</small></div>
-    <div class="bar"><div id="fill"></div><div class="ticks" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div></div>
-    <div class="row">
+    <div class="big" id="target" aria-live="off"></div>
+    <div class="pills" id="pills" aria-hidden="true"></div>
+    <div class="row today">
       <span class="label" id="today">Aujourd'hui</span>
+      <span id="todayRange">-</span>
+    </div>
+    <div class="row" style="margin-top:6px">
+      <span class="label" id="todayHours"></span>
       <span class="label" id="reset">Reset dans ...</span>
     </div>
   </section>
 
-  <section class="card today">
-    <div>
-      <div class="label" id="startLabel">Début de journée</div>
-      <div class="mid" id="todayStart">0%</div>
-    </div>
-    <div class="arrow">&rarr;</div>
-    <div>
-      <div class="label" id="endLabel">Fin de journée</div>
-      <div class="mid" id="todayEnd">0%</div>
-    </div>
-  </section>
+  <section class="days" id="days"></section>
 
-  <section class="card">
-    <table id="days"></table>
-  </section>
-
-  <section class="card">
+  <section class="card up">
     <details>
-      <summary>Début de semaine</summary>
+      <summary>Réglages</summary>
+      <div class="label field-label">Début de semaine</div>
       <div class="settings">
         <select id="weekday" aria-label="Jour du reset">
           <option value="1">Lundi</option>
@@ -109,10 +110,20 @@
         </select>
         <input id="time" type="time" aria-label="Heure du reset">
       </div>
-      <div class="label" style="margin-top:16px">Journée de travail</div>
+      <div class="label field-label">Journée de travail</div>
       <div class="settings">
         <input id="dayStart" type="time" aria-label="Début de journée">
         <input id="dayEnd" type="time" aria-label="Fin de journée">
+      </div>
+      <div class="label field-label">Décimales</div>
+      <div class="settings">
+        <select id="decimals" aria-label="Décimales">
+          <option value="0">0</option>
+          <option value="1">1</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+        </select>
       </div>
     </details>
   </section>
@@ -120,7 +131,7 @@
 <script>
 const WEEK = 7 * 24 * 3600 * 1000;
 const DAY_NAMES = ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."];
-const DEFAULTS = { weekday: 1, time: "00:00", dayStart: "09:00", dayEnd: "18:00" };
+const DEFAULTS = { weekday: 1, time: "00:00", dayStart: "09:00", dayEnd: "18:00", decimals: 3 };
 
 function loadSettings() {
   try {
@@ -144,21 +155,6 @@ function lastReset(now, { weekday, time }) {
   return d;
 }
 
-function fmtDuration(ms) {
-  const mins = Math.floor(ms / 60000);
-  const d = Math.floor(mins / 1440), h = Math.floor(mins / 60) % 24, m = mins % 60;
-  return d ? `${d}j ${h}h` : `${h}h ${String(m).padStart(2, "0")}`;
-}
-
-const settings = loadSettings();
-const $ = (id) => document.getElementById(id);
-$("weekday").value = settings.weekday;
-$("weekday").onchange = (e) => { settings.weekday = Number(e.target.value); saveSettings(settings); render(); };
-for (const key of ["time", "dayStart", "dayEnd"]) {
-  $(key).value = settings[key];
-  $(key).onchange = (e) => { if (e.target.value) { settings[key] = e.target.value; saveSettings(settings); render(); } };
-}
-
 function atTime(day, time) {
   const [h, m] = time.split(":").map(Number);
   const d = new Date(day);
@@ -178,18 +174,59 @@ function workDays(start, { dayStart, dayEnd }) {
   return days;
 }
 
-const fmtPct = (x) => `${x.toFixed(1)}%`;
+function fmtDuration(ms) {
+  const mins = Math.floor(ms / 60000);
+  const d = Math.floor(mins / 1440), h = Math.floor(mins / 60) % 24, m = mins % 60;
+  return d ? `${d}j ${h}h` : `${h}h ${String(m).padStart(2, "0")}`;
+}
+
+const fmtPct = (x) => `${x.toFixed(1).replace(".", ",")} %`;
 const fmtHour = (d) => `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 
-let pace = () => 0;
+const settings = loadSettings();
+const $ = (id) => document.getElementById(id);
 
-// Four decimals: at a working-hours pace the last one moves every second or so.
+$("weekday").value = settings.weekday;
+$("weekday").onchange = (e) => { settings.weekday = Number(e.target.value); saveSettings(settings); render(); };
+$("decimals").value = settings.decimals;
+$("decimals").onchange = (e) => { settings.decimals = Number(e.target.value); saveSettings(settings); render(); };
+for (const key of ["time", "dayStart", "dayEnd"]) {
+  $(key).value = settings[key];
+  $(key).onchange = (e) => { if (e.target.value) { settings[key] = e.target.value; saveSettings(settings); render(); } };
+}
+
+// Rolling counter: one column of digits per position, rebuilt only when the shape changes.
+let odoShape = "";
+let odoCols = [];
+function drawTarget(text) {
+  const shape = text.replace(/\d/g, "0");
+  if (shape !== odoShape) {
+    odoShape = shape;
+    $("target").innerHTML = [...text].map((ch) => /\d/.test(ch)
+      ? `<span class="odo"><span class="col">${[..."0123456789"].map((d) => `<span>${d}</span>`).join("")}</span></span>`
+      : `<span class="sep">,</span>`).join("") + `<span class="unit">&nbsp;%</span>`;
+    odoCols = [...$("target").querySelectorAll(".col")];
+    odoCols.forEach((col) => col.addEventListener("transitionend", () => col.classList.remove("moving")));
+  }
+  [...text.replace(".", "")].forEach((ch, i) => {
+    const col = odoCols[i];
+    if (col.dataset.digit === ch) return;
+    if (col.dataset.digit !== undefined) col.classList.add("moving");
+    col.dataset.digit = ch;
+    col.style.transform = `translateY(-${ch}em)`;
+  });
+}
+
+let pace = () => 0;
+let pills = [];
+
 function tick() {
-  const pct = pace(new Date());
-  const [int, dec] = pct.toFixed(4).split(".");
-  $("int").textContent = int;
-  $("dec").textContent = `.${dec}`;
-  $("fill").style.width = `${pct}%`;
+  const now = new Date();
+  drawTarget(pace(now).toFixed(settings.decimals));
+  for (const { el, day } of pills) {
+    const f = Math.min(Math.max((now - day.from) / (day.to - day.from), 0), 1);
+    el.firstChild.style.height = `${f * 100}%`;
+  }
 }
 
 function render() {
@@ -201,19 +238,21 @@ function render() {
   const at = (t) => (days.reduce((sum, d) => sum + Math.min(Math.max(t - d.from, 0), d.to - d.from), 0) / total) * 100;
   const today = days.find((d) => d.from.toDateString() === now.toDateString());
 
+  $("pills").innerHTML = days.map((d) =>
+    `<div class="pill in${d === today ? " now" : ""}" style="flex:${d.to - d.from}"><div></div></div>`).join("");
+  pills = [...$("pills").children].map((el, i) => ({ el, day: days[i] }));
   pace = at;
   tick();
-  $("today").textContent = `${DAY_NAMES[now.getDay()]} ${now.getDate()}`;
+
+  $("today").textContent = `Aujourd'hui, ${DAY_NAMES[now.getDay()]} ${now.getDate()}`;
+  $("todayRange").textContent = today ? `${fmtPct(at(today.from))} → ${fmtPct(at(today.to))}` : "repos";
+  $("todayHours").textContent = today ? `${fmtHour(today.from)} → ${fmtHour(today.to)}` : "";
   $("reset").textContent = `Reset dans ${fmtDuration(WEEK - (now - start))}`;
-  $("startLabel").textContent = today ? `À ${fmtHour(today.from)}` : "Début de journée";
-  $("endLabel").textContent = today ? `À ${fmtHour(today.to)}` : "Fin de journée";
-  $("todayStart").textContent = today ? fmtPct(at(today.from)) : "-";
-  $("todayEnd").textContent = today ? fmtPct(at(today.to)) : "-";
 
   $("days").innerHTML = days.map((d) => {
     const cls = d === today ? "now" : d.to <= now ? "past" : "";
-    const span = d.clipped ? ` ${fmtHour(d.from)}-${fmtHour(d.to)}` : "";
-    return `<tr class="${cls}"><td>${DAY_NAMES[d.from.getDay()]} ${d.from.getDate()}<span class="label">${span}</span></td><td>${fmtPct(at(d.from))} &rarr; ${fmtPct(at(d.to))}</td></tr>`;
+    const span = d.clipped ? ` <span class="label">${fmtHour(d.from)}-${fmtHour(d.to)}</span>` : "";
+    return `<div class="day row in ${cls}"><span>${DAY_NAMES[d.from.getDay()]} ${d.from.getDate()}${span}</span><span>${fmtPct(at(d.from))} → ${fmtPct(at(d.to))}</span></div>`;
   }).join("");
 }
 
@@ -229,7 +268,7 @@ async function checkForUpdate() {
 
 render();
 checkForUpdate();
-setInterval(tick, 200);
+setInterval(tick, 250);
 setInterval(render, 30000);
 setInterval(checkForUpdate, 5 * 60000);
 document.addEventListener("visibilitychange", () => {
