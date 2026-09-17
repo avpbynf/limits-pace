@@ -12,6 +12,6 @@
 - Neumorphic interface following the system light or dark theme, in three layouts to choose
   from in the settings: Relief (one pill per working day), Cadran (a dial) and Barres (one
   column per day). Every setting is kept in the browser.
-- The week is drawn as seven equal gauges, one per working day, each filling across that day's
-  working hours. The two halves of a day split by the reset share one gauge.
+- The week is drawn as the calendar week, Monday to Sunday, one gauge per day filling across
+  its working hours. Hours outside the current session are shown dark.
 - Working hours may end after midnight, and malformed settings fall back to their defaults.

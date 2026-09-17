@@ -60,6 +60,8 @@
   .pill > div { border-radius: 14px; box-shadow: inset 4px 4px 8px var(--dark), inset -4px -4px 8px var(--light); }
   .fill { position: absolute; left: 0; right: 0; bottom: 0; background: var(--accent); height: 0; }
   .fill.h { top: 0; right: auto; width: 0; height: auto; }
+  .off { position: absolute; left: 0; right: 0; background: var(--dark); }
+  .off.h { top: 0; bottom: 0; right: auto; }
   .ring { outline: 2px solid var(--accent); outline-offset: 3px; }
 
   .dial { width: 262px; height: 262px; border-radius: 50%; position: relative; box-shadow: inset 6px 6px 12px var(--dark), inset -6px -6px 12px var(--light); }
@@ -228,7 +230,13 @@ function updateOdo(el, text) {
 }
 
 const odo = () => `<span class="odo" data-odo></span>`;
-const slot = (s, i, horizontal) => `<div class="fill${horizontal ? " h" : ""}" data-fill="${i}"></div>`;
+// Dark bands mark the hours of the day outside the session; the fill starts where the session does.
+const slot = (s, i, horizontal) => {
+  const [pos, size] = horizontal ? ["left", "width"] : ["bottom", "height"];
+  const band = (a, b) => b > a ? `<div class="off${horizontal ? " h" : ""}" style="${pos}:${(a * 100).toFixed(2)}%;${size}:${((b - a) * 100).toFixed(2)}%"></div>` : "";
+  return band(0, s.before) + band(s.after, 1) +
+    `<div class="fill${horizontal ? " h" : ""}" data-fill="${i}" style="${pos}:${(s.before * 100).toFixed(2)}%"></div>`;
+};
 
 function reliefView(v) {
   return `
@@ -328,23 +336,27 @@ function render() {
   const today = days.find((d) => d.from <= now && now < d.to)
     || days.find((d) => d.from.toDateString() === now.toDateString());
   pace = at;
-  // One gauge per weekday, filling across that day's working hours only. A reset in the middle
-  // of a working day splits it between both ends of the week; the two halves share one gauge.
-  const groups = new Map();
-  for (const d of days) {
-    const key = d.from.getDay();
-    if (!groups.has(key)) groups.set(key, []);
-    groups.get(key).push(d);
-  }
-  slots = [...groups.values()].map((parts) => {
-    const worked = (t) => parts.reduce((sum, d) => sum + Math.min(Math.max(t - d.from, 0), d.to - d.from), 0);
-    const length = worked(Infinity) || 1;
+  // One gauge per day of the calendar week, Monday first, spanning that day's working hours.
+  // What falls outside the current session is shown dark; the rest fills as time passes.
+  const end = new Date(start.getTime() + WEEK);
+  const monday = atTime(now, "00:00");
+  monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7));
+  slots = Array.from({ length: 7 }, (_, i) => {
+    const day = new Date(monday);
+    day.setDate(day.getDate() + i);
+    const from = atTime(day, settings.dayStart);
+    const to = atTime(day, settings.dayEnd);
+    if (to <= from) to.setDate(to.getDate() + 1);
+    const inFrom = new Date(Math.min(Math.max(from, start), to));
+    const inTo = new Date(Math.max(Math.min(to, end), inFrom));
+    const frac = (t) => (t - from) / (to - from);
     return {
-      parts, weekday: parts[0].from.getDay(), end: parts[parts.length - 1].to,
-      progress: (t) => worked(t) / length,
+      day, from, to, inFrom, inTo, usable: inFrom < inTo,
+      before: frac(inFrom), after: frac(inTo),
+      progress: (t) => frac(Math.min(Math.max(t, inFrom), inTo)) - frac(inFrom),
     };
   });
-  const current = slots.find((s) => s.parts.includes(today));
+  const current = slots.find((s) => s.day.toDateString() === now.toDateString());
 
   const v = {
     days: days.map((d) => ({
@@ -354,8 +366,8 @@ function render() {
       fromPct: pct(at(d.from)), toPct: pct(at(d.to)),
     })),
     slots: slots.map((s) => ({
-      letter: DAY_LETTERS[s.weekday], toShort: pctShort(at(s.end)),
-      isToday: s === current, isPast: s.end <= now,
+      letter: DAY_LETTERS[s.day.getDay()], toShort: s.usable ? pctShort(at(s.inTo)) : "-",
+      isToday: s === current, isPast: s.to <= now, before: s.before, after: s.after,
     })),
     todayLabel: `Aujourd'hui, ${DAY_NAMES[now.getDay()]} ${now.getDate()}`,
     todayRange: today ? `${pct(at(today.from))} → ${pct(at(today.to))}` : "repos",
