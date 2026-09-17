@@ -12,13 +12,13 @@
 <style>
   :root {
     --bg: #e6e3de; --text: #4a4540; --muted: #8a837a; --dark: #c4c1bd; --light: #ffffff; --accent: #c96442;
-    --hair: rgba(0, 0, 0, 0.06); --hi: rgba(255, 255, 255, 0.5); --track: #d8d4ce;
+    --hair: rgba(0, 0, 0, 0.06); --hi: rgba(255, 255, 255, 0.5); --track: #d8d4ce; --off: rgba(138, 131, 122, 0.28);
     --disc: 0 3px 6px rgba(0, 0, 0, 0.16), 0 1px 1px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.7);
   }
   @media (prefers-color-scheme: dark) {
     :root {
       --bg: #2a2825; --text: #e8e2da; --muted: #9a938a; --dark: #1c1b19; --light: #383531; --accent: #e0855f;
-      --hair: rgba(255, 255, 255, 0.07); --hi: rgba(255, 255, 255, 0.04); --track: #211f1d;
+      --hair: rgba(255, 255, 255, 0.07); --hi: rgba(255, 255, 255, 0.04); --track: #211f1d; --off: rgba(154, 147, 138, 0.22);
       --disc: 0 3px 6px rgba(0, 0, 0, 0.55), 0 1px 1px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.07);
     }
   }
@@ -31,9 +31,8 @@
     padding: max(28px, env(safe-area-inset-top)) 16px max(28px, env(safe-area-inset-bottom));
   }
   main { width: 100%; max-width: 440px; display: grid; gap: 20px; align-content: start; }
-  select, input { font: inherit; color: var(--text); border: 0; outline: 0; background: transparent; -webkit-appearance: none; appearance: none; }
-  input[type=time]::-webkit-calendar-picker-indicator { display: none; }
-  button { all: unset; font: inherit; }
+  button { all: unset; font: inherit; -webkit-tap-highlight-color: transparent; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+  button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   .num { font-variant-numeric: tabular-nums; }
   .row { display: flex; white-space: nowrap; justify-content: space-between; gap: 12px; }
   .muted { color: var(--muted); }
@@ -60,7 +59,7 @@
   .pill > div { border-radius: 14px; box-shadow: inset 4px 4px 8px var(--dark), inset -4px -4px 8px var(--light); }
   .fill { position: absolute; left: 0; right: 0; bottom: 0; background: var(--accent); height: 0; }
   .fill.h { top: 0; right: auto; width: 0; height: auto; }
-  .off { position: absolute; left: 0; right: 0; background: var(--dark); }
+  .off { position: absolute; left: 0; right: 0; background: var(--off); }
   .off.h { top: 0; bottom: 0; right: auto; }
   .ring { outline: 2px solid var(--accent); outline-offset: 3px; }
 
@@ -86,9 +85,19 @@
   .segmented { display: flex; padding: 5px; border-radius: 16px; gap: 4px; }
   .segmented button { flex: 1; text-align: center; padding: 9px 0; border-radius: 12px; color: var(--muted); cursor: pointer; }
   .segmented button[aria-checked=true] { background: var(--bg); box-shadow: 4px 4px 8px var(--dark), -4px -4px 8px var(--light); color: var(--accent); font-weight: 700; cursor: default; }
-  .field { flex: 1; min-width: 0; padding: 12px 14px; border-radius: 14px; display: flex; align-items: center; gap: 6px; font-variant-numeric: tabular-nums; }
-  .field > * { flex: 1; width: 100%; min-width: 0; }
-  .field > span { flex: none; width: auto; color: var(--muted); font-size: 12px; }
+  .field { flex: 1; min-width: 0; padding: 12px 14px; border-radius: 14px; display: flex; align-items: center; justify-content: space-between; gap: 6px; font-variant-numeric: tabular-nums; cursor: pointer; }
+  .field > span { color: var(--muted); font-size: 12px; }
+  .field[aria-expanded=true] { color: var(--accent); font-weight: 700; }
+
+  /* Two scroll-snapped wheels, hours and minutes, with a raised band marking the chosen row. */
+  .picker { position: relative; isolation: isolate; display: flex; justify-content: center; align-items: center; gap: 4px; height: 180px; border-radius: 16px; }
+  .picker .band { position: absolute; z-index: -1; left: 50%; top: 72px; width: 150px; height: 36px; margin-left: -75px; border-radius: 10px; background: var(--bg); box-shadow: var(--disc); }
+  .wheel { height: 180px; width: 60px; overflow-y: auto; scroll-snap-type: y mandatory; overscroll-behavior: contain; scrollbar-width: none; text-align: center; font-size: 22px; font-weight: 600; color: var(--muted); -webkit-mask-image: linear-gradient(transparent, #000 35%, #000 65%, transparent); mask-image: linear-gradient(transparent, #000 35%, #000 65%, transparent); }
+  .wheel::-webkit-scrollbar { display: none; }
+  .wheel::before, .wheel::after { content: ""; display: block; height: 72px; }
+  .wheel div { height: 36px; line-height: 36px; scroll-snap-align: center; }
+  .wheel div.on { color: var(--accent); }
+  .picker .colon { font-size: 22px; font-weight: 600; color: var(--muted); padding-bottom: 4px; }
 </style>
 </head>
 <body>
@@ -107,19 +116,28 @@
         <button type="button" role="radio" data-value="barres">Barres</button>
       </div>
       <div class="caps-sm" style="margin-top:12px">Début de semaine</div>
-      <div style="display:flex;gap:12px">
-        <div class="field well">
-          <select id="weekday" aria-label="Jour du reset">
-            <option value="1">Lundi</option><option value="2">Mardi</option><option value="3">Mercredi</option><option value="4">Jeudi</option><option value="5">Vendredi</option><option value="6">Samedi</option><option value="0">Dimanche</option>
-          </select><span>▾</span>
-        </div>
-        <div class="field well"><input id="time" type="time" aria-label="Heure du reset"></div>
+      <div class="segmented well" role="radiogroup" aria-label="Jour du reset" id="weekday">
+        <button type="button" role="radio" data-value="1" aria-label="lundi">L</button>
+        <button type="button" role="radio" data-value="2" aria-label="mardi">M</button>
+        <button type="button" role="radio" data-value="3" aria-label="mercredi">M</button>
+        <button type="button" role="radio" data-value="4" aria-label="jeudi">J</button>
+        <button type="button" role="radio" data-value="5" aria-label="vendredi">V</button>
+        <button type="button" role="radio" data-value="6" aria-label="samedi">S</button>
+        <button type="button" role="radio" data-value="0" aria-label="dimanche">D</button>
+      </div>
+      <div style="display:flex;gap:12px" data-row>
+        <button type="button" class="field well num" id="time" data-time aria-haspopup="true" aria-expanded="false"><span>Heure du reset</span><b data-value></b></button>
       </div>
       <div class="caps-sm" style="margin-top:12px">Journée de travail</div>
-      <div style="display:flex;gap:12px;align-items:center">
-        <div class="field well"><input id="dayStart" type="time" aria-label="Début de journée"></div>
-        <span class="muted">→</span>
-        <div class="field well"><input id="dayEnd" type="time" aria-label="Fin de journée"></div>
+      <div style="display:flex;gap:12px;align-items:center" data-row>
+        <button type="button" class="field well num" id="dayStart" data-time aria-haspopup="true" aria-expanded="false"><span>Début</span><b data-value></b></button>
+        <button type="button" class="field well num" id="dayEnd" data-time aria-haspopup="true" aria-expanded="false"><span>Fin</span><b data-value></b></button>
+      </div>
+      <div class="picker well" id="picker" hidden role="group" aria-label="Choix de l'heure">
+        <div class="band"></div>
+        <div class="wheel" id="wheelH" tabindex="0" aria-label="Heures"></div>
+        <div class="colon">:</div>
+        <div class="wheel" id="wheelM" tabindex="0" aria-label="Minutes"></div>
       </div>
       <div class="caps-sm" style="margin-top:12px">Décimales</div>
       <div class="segmented well" role="radiogroup" aria-label="Décimales" id="decimals">
@@ -388,12 +406,60 @@ function render() {
 }
 
 function syncSettings() {
-  for (const id of ["layout", "decimals"]) {
+  for (const id of ["layout", "weekday", "decimals"]) {
     $(id).querySelectorAll("button").forEach((b) => b.setAttribute("aria-checked", String(b.dataset.value === String(settings[id]))));
   }
-  $("weekday").value = settings.weekday;
-  for (const key of ["time", "dayStart", "dayEnd"]) $(key).value = settings[key];
+  for (const key of ["time", "dayStart", "dayEnd"]) $(key).querySelector("[data-value]").textContent = settings[key];
 }
+
+// The time picker: two wheels that snap by rows of 36px, shown under the field being edited.
+const ROW = 36;
+const picker = $("picker");
+const wheels = { h: $("wheelH"), m: $("wheelM") };
+let pickerKey = null;
+wheels.h.innerHTML = Array.from({ length: 24 }, (_, i) => `<div>${String(i).padStart(2, "0")}</div>`).join("");
+wheels.m.innerHTML = Array.from({ length: 60 }, (_, i) => `<div>${String(i).padStart(2, "0")}</div>`).join("");
+
+function markWheel(wheel, index) {
+  wheel.querySelectorAll("div").forEach((d, i) => d.classList.toggle("on", i === index));
+}
+
+function closePicker() {
+  pickerKey = null;
+  picker.hidden = true;
+  document.querySelectorAll("[data-time]").forEach((b) => b.setAttribute("aria-expanded", "false"));
+}
+
+function openPicker(btn) {
+  const key = btn.id;
+  if (pickerKey === key) return closePicker();
+  closePicker();
+  pickerKey = key;
+  btn.setAttribute("aria-expanded", "true");
+  btn.closest("[data-row]").after(picker);
+  picker.hidden = false;
+  const [h, m] = settings[key].split(":").map(Number);
+  for (const [wheel, index] of [[wheels.h, h], [wheels.m, m]]) {
+    wheel.dataset.index = index;
+    markWheel(wheel, index);
+    wheel.scrollTo({ top: index * ROW, behavior: "instant" });
+  }
+}
+
+let settle = null;
+function onWheel() {
+  if (!pickerKey) return;
+  clearTimeout(settle);
+  settle = setTimeout(() => {
+    const h = Math.round(wheels.h.scrollTop / ROW), m = Math.round(wheels.m.scrollTop / ROW);
+    markWheel(wheels.h, h);
+    markWheel(wheels.m, m);
+    const value = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+    if (value !== settings[pickerKey]) update({ [pickerKey]: value });
+  }, 120);
+}
+wheels.h.addEventListener("scroll", onWheel, { passive: true });
+wheels.m.addEventListener("scroll", onWheel, { passive: true });
 
 function update(patch) {
   for (const [k, v] of Object.entries(patch)) if (VALID[k](v)) settings[k] = v;
@@ -407,13 +473,12 @@ $("toggle").onclick = () => {
   $("settings").hidden = !open;
   $("toggle").setAttribute("aria-expanded", String(open));
   $("chevron").textContent = open ? "▴" : "▾";
+  if (!open) closePicker();
 };
 $("layout").onclick = (e) => { const b = e.target.closest("button"); if (b) update({ layout: b.dataset.value }); };
+$("weekday").onclick = (e) => { const b = e.target.closest("button"); if (b) update({ weekday: Number(b.dataset.value) }); };
 $("decimals").onclick = (e) => { const b = e.target.closest("button"); if (b) update({ decimals: Number(b.dataset.value) }); };
-$("weekday").onchange = (e) => update({ weekday: Number(e.target.value) });
-for (const key of ["time", "dayStart", "dayEnd"]) {
-  $(key).onchange = (e) => update({ [key]: e.target.value.slice(0, 5) });
-}
+document.querySelectorAll("[data-time]").forEach((b) => b.addEventListener("click", () => openPicker(b)));
 
 // Reload on its own when a new version is published, so the page never needs a manual refresh.
 let loadedPage = null;

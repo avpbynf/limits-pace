@@ -15,3 +15,6 @@
 - The week is drawn as the calendar week, Monday to Sunday, one gauge per day filling across
   its working hours. Hours outside the current session are shown dark.
 - Working hours may end after midnight, and malformed settings fall back to their defaults.
+- The settings use custom controls only: the reset day is a row of seven buttons and every
+  time is picked on two scrolling wheels, so they work the same on a phone. The hours outside
+  the session are shown in a soft grey instead of black.
